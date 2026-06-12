@@ -1,0 +1,622 @@
+/*
+ * K Language — GrammarKit BNF Grammar
+ *
+ * Copyright 2023-2026 Emilien Kia
+ * Licensed under the Apache License, Version 2.0
+ *
+ * Derived from klang.ebnf — the authoritative EBNF reference.
+ * This file drives GrammarKit code generation (Parser + PSI).
+ */
+
+{
+    parserClass           = "com.github.emilienkia.klang.plugin.language.KlangParser"
+    parserUtilClass       = "com.intellij.lang.parser.GeneratedParserUtilBase"
+
+    extends               = "com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+    psiClassPrefix        = "Klang"
+    psiImplClassSuffix    = "Impl"
+    psiPackage            = "com.github.emilienkia.klang.plugin.language.psi"
+    psiImplPackage        = "com.github.emilienkia.klang.plugin.language.psi.impl"
+
+    elementTypeHolderClass = "com.github.emilienkia.klang.plugin.language.psi.KlangTypes"
+    elementTypeClass       = "com.github.emilienkia.klang.plugin.language.psi.KlangElementType"
+    tokenTypeClass         = "com.github.emilienkia.klang.plugin.language.psi.KlangTokenType"
+
+    // ── Named element mixins ──────────────────────────────────────────────────
+    // Declarations expose getName()/setName()/getNameIdentifier() via KlangNamedDeclMixin
+    // identifierExpr exposes getReference() via KlangIdentifierExprMixin
+
+    implements("aggregateDecl")  = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("aggregateDecl")       = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    implements("enumDecl")       = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("enumDecl")            = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    implements("unionDecl")      = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("unionDecl")           = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    implements("functionDecl")   = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("functionDecl")        = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangFunctionDeclMixin"
+
+    implements("variableDecl")   = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("variableDecl")        = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    mixin("identifierExpr")      = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangIdentifierExprMixin"
+
+    // ── Tokens ────────────────────────────────────────────────────────────
+
+    // Comments
+    tokens = [
+        LINE_COMMENT        = "regexp://[^\r\n]*"
+        BLOCK_COMMENT       = "regexp:/\*([^*]|\*+[^/*])*\*+/"
+
+        // Keywords
+        KW_BOOL             = "bool"
+        KW_BYTE             = "byte"
+        KW_CHAR             = "char"
+        KW_SHORT            = "short"
+        KW_INT              = "int"
+        KW_LONG             = "long"
+        KW_FLOAT            = "float"
+        KW_DOUBLE           = "double"
+        KW_UNSIGNED         = "unsigned"
+        KW_STRUCT           = "struct"
+        KW_CLASS            = "class"
+        KW_INTERFACE        = "interface"
+        KW_ANNOTATION       = "annotation"
+        KW_NAMESPACE        = "namespace"
+        KW_MODULE           = "module"
+        KW_IMPORT           = "import"
+        KW_USING            = "using"
+        KW_FRIEND           = "friend"
+        KW_STATIC           = "static"
+        KW_CONST            = "const"
+        KW_ABSTRACT         = "abstract"
+        KW_FINAL            = "final"
+        KW_OVERRIDE         = "override"
+        KW_PUBLIC           = "public"
+        KW_PROTECTED        = "protected"
+        KW_PRIVATE          = "private"
+        KW_THIS             = "this"
+        KW_RETURN           = "return"
+        KW_IF               = "if"
+        KW_ELSE             = "else"
+        KW_WHILE            = "while"
+        KW_FOR              = "for"
+        KW_BREAK            = "break"
+        KW_NEW              = "new"
+        KW_DELETE           = "delete"
+        KW_DEFAULT          = "default"
+        KW_ENUM             = "enum"
+        KW_UNION            = "union"
+        KW_OPERATOR         = "operator"
+        KW_TEMPLATE         = "template"
+        KW_TYPENAME         = "typename"
+        KW_GENERIC          = "generic"
+
+        // Exception handling
+        KW_THROW            = "throw"
+        KW_THROWS           = "throws"
+        KW_TRY              = "try"
+        KW_CATCH            = "catch"
+        KW_FINALLY          = "finally"
+
+        // Boolean / null literals
+        LIT_TRUE            = "true"
+        LIT_FALSE           = "false"
+        LIT_NULL            = "null"
+
+        // Literals (regexp, for highlighting — actual lexing handled by JFlex)
+        LIT_INTEGER         = "regexp:[0-9]+"
+        LIT_FLOAT           = "regexp:[0-9]+\.[0-9]*"
+        LIT_CHAR            = "regexp:'[^'\\\\]'"
+        LIT_STRING          = "regexp:\"[^\"]*\""
+
+        // Identifier
+        IDENTIFIER          = "regexp:[A-Za-z_][A-Za-z_0-9]*"
+
+        // Multi-char operators / punctuators
+        OP_ARROW_STAR       = "->*"
+        OP_ARROW            = "->"
+        OP_DOT_STAR         = ".*"
+        OP_LSHIFT_ASSIGN    = "<<="
+        OP_RSHIFT_ASSIGN    = ">>="
+        OP_LSHIFT           = "<<"
+        OP_RSHIFT           = ">>"
+        OP_INC              = "++"
+        OP_DEC              = "--"
+        OP_POW              = "**"
+        OP_PLUS_ASSIGN      = "+="
+        OP_MINUS_ASSIGN     = "-="
+        OP_STAR_ASSIGN      = "*="
+        OP_DIV_ASSIGN       = "/="
+        OP_MOD_ASSIGN       = "%="
+        OP_AND_ASSIGN       = "&="
+        OP_OR_ASSIGN        = "|="
+        OP_XOR_ASSIGN       = "^="
+        OP_EQ               = "=="
+        OP_NEQ              = "!="
+        OP_LE               = "<="
+        OP_GE               = ">="
+        OP_AND              = "&&"
+        OP_OR               = "||"
+        PUNC_SCOPE          = "::"
+        PUNC_ELLIPSIS       = "..."
+
+        // Single-char operators
+        OP_DOT              = "."
+        OP_QUESTION         = "?"
+        OP_COLON            = ":"
+        OP_NOT              = "!"
+        OP_TILDE            = "~"
+        OP_ASSIGN           = "="
+        OP_PLUS             = "+"
+        OP_MINUS            = "-"
+        OP_STAR             = "*"
+        OP_DIV              = "/"
+        OP_AMP              = "&"
+        OP_PIPE             = "|"
+        OP_CARET            = "^"
+        OP_PERCENT          = "%"
+        OP_HASH             = "#"
+        OP_LT               = "<"
+        OP_GT               = ">"
+
+        // Punctuators
+        PUNC_LPAREN         = "("
+        PUNC_RPAREN         = ")"
+        PUNC_LBRACE         = "{"
+        PUNC_RBRACE         = "}"
+        PUNC_LBRACKET       = "["
+        PUNC_RBRACKET       = "]"
+        PUNC_SEMICOLON      = ";"
+        PUNC_COMMA          = ","
+        PUNC_AT             = "@"
+    ]
+}
+
+// ============================================================================
+//  2. SYNTACTIC GRAMMAR
+// ============================================================================
+
+// ── Compilation Unit ─────────────────────────────────────────────────────────
+
+unit ::= moduleDeclaration? importDeclaration* declaration*
+    { name = "compilation unit" }
+
+moduleDeclaration ::= 'module' qualifiedIdentifier ';'
+    { name = "module declaration" }
+
+importDeclaration ::= 'import' qualifiedIdentifier ';'
+    { name = "import declaration" }
+
+qualifiedIdentifier ::= '::'? identifierSegment ('::' identifierSegment)*
+    { name = "qualified identifier" }
+
+identifierSegment ::= IDENTIFIER templateArgList?
+    { name = "identifier segment" }
+
+// ── Templates ────────────────────────────────────────────────────────────────
+
+templateDeclaration ::= 'template' '<' templateParameterList '>'
+    { name = "template declaration" }
+
+templateParameterList ::= templateParameter (',' templateParameter)*
+    { name = "template parameter list" }
+
+templateParameter ::= templateParameterKind '...'? IDENTIFIER (':' typeSpec)? ('=' conditionalExpr)?
+    { name = "template parameter" }
+
+templateParameterKind ::= 'typename' | 'struct' | 'class' | 'interface'
+                        | fundamentalTypeSpec
+                        | IDENTIFIER
+    { name = "template parameter kind" }
+
+templateArgList ::= '<' templateArg (',' templateArg)* '>'
+    { name = "template argument list" }
+
+templateArg ::= typeSpec | conditionalExpr
+    { name = "template argument" }
+
+// ── Declarations ─────────────────────────────────────────────────────────────
+
+declaration ::= visibilityDecl
+              | namespaceDecl
+              | usingDecl
+              | friendDecl
+              | aggregateDecl
+              | enumDecl
+              | unionDecl
+              | functionDecl
+              | variableDecl
+    { name = "declaration" }
+
+visibilityDecl ::= ('public' | 'protected' | 'private') ':'
+    { name = "visibility label (public/protected/private:)" }
+
+namespaceDecl ::= 'namespace' IDENTIFIER? '{' declaration* '}'
+    { name = "namespace declaration" }
+
+usingDecl ::= 'using' usingFilter? (IDENTIFIER '=')? qualifiedIdentifier ';'
+    { name = "using declaration" }
+
+usingFilter ::= 'namespace' | 'struct' | 'interface' | 'class'
+    { name = "using filter (namespace/struct/interface/class)" }
+
+friendDecl ::= 'friend' friendFilter? qualifiedIdentifier ';'
+    { name = "friend declaration" }
+
+friendFilter ::= 'struct' | 'interface' | 'class'
+    { name = "friend filter (struct/interface/class)" }
+
+// ── Aggregates ───────────────────────────────────────────────────────────────
+
+aggregateDecl ::= annotationDef* templateDeclaration? specifier*
+                  ('struct' | 'class' | 'interface' | 'annotation')
+                  IDENTIFIER
+                  (':' baseClause)?
+                  '{' declaration* '}'
+    { name = "struct/class/interface/annotation declaration" }
+
+baseClause ::= baseSpec (',' baseSpec)*
+    { name = "base class list" }
+
+baseSpec ::= ('public' | 'protected' | 'private')? qualifiedIdentifier
+    { name = "base class specifier" }
+
+// ── Enumerations ─────────────────────────────────────────────────────────────
+
+enumDecl ::= specifier* 'enum' IDENTIFIER (':' typeSpec)?
+             '{' enumEntry* '}' ';'
+    { name = "enum declaration" }
+
+enumEntry ::= IDENTIFIER ('=' (LIT_INTEGER | IDENTIFIER) | braceInitList | '(' expressionList? ')')? 'default'? ';'
+    { name = "enum entry" }
+
+// ── Unions ────────────────────────────────────────────────────────────────────
+
+unionDecl ::= annotationDef* specifier*
+              'union' IDENTIFIER
+              (':' qualifiedIdentifier)?
+              '{' unionMemberDecl* '}'
+    { name = "union declaration" }
+
+unionMemberDecl ::= 'const'? IDENTIFIER ':' typeSpec ';'
+    { name = "union member declaration" }
+
+// ── Annotations ──────────────────────────────────────────────────────────────
+
+annotationDef ::= '@' qualifiedIdentifier
+                | '@' qualifiedIdentifier '(' expressionList? ')'
+                | '@' qualifiedIdentifier braceInitList
+    { name = "annotation" }
+
+// ── Functions ────────────────────────────────────────────────────────────────
+
+functionDecl ::= annotationDef* (templateDeclaration | genericDeclaration)? specifier*
+                 (functionHead | operatorFunctionHead | destructorHead)
+                 '(' parameterList? ')'
+                 namedReturnVar?
+                 (':' returnTypeOrMemberInitList)?
+                 throwsClause?
+                 functionBody
+    { name = "function declaration" }
+
+genericDeclaration ::= 'generic' '<' templateParameterList '>'
+    { name = "generic declaration" }
+
+throwsClause ::= 'throws' typeSpec (',' typeSpec)*
+    { name = "throws clause" }
+
+functionHead ::= IDENTIFIER
+    { name = "function name" }
+
+destructorHead ::= '~' IDENTIFIER
+    { name = "destructor name (~Name)" }
+
+operatorFunctionHead ::= 'operator' operatorSymbol
+                       | 'operator' '(' ')'
+    { name = "operator function name" }
+
+operatorSymbol ::= '+'  | '-'   | '*'   | '/'   | '%'
+                 | '&'  | '|'   | '^'   | '~'
+                 | '<<' | '>>'
+                 | '&&' | '||'  | '!'
+                 | '==' | '!='  | '<'   | '>'   | '<=' | '>='
+                 | '='  | '+='  | '-='  | '*='  | '/=' | '%='
+                 | '&=' | '|='  | '^='  | '<<=' | '>>='
+                 | '++' '_'
+                 | '--' '_'
+                 | '_'  '++'
+                 | '_'  '--'
+    { name = "operator symbol" }
+
+namedReturnVar ::= IDENTIFIER ':' typeSpec namedReturnInit?
+    { name = "named return variable" }
+
+namedReturnInit ::= '=' conditionalExpr
+                  | '(' expressionList? ')'
+    { name = "named return initializer" }
+
+// Order matters: memberInitList must be tried before typeSpec.
+// A memberInit is IDENTIFIER '(' ... ')'. If the token after ':' is a simple
+// identifier NOT followed by '(', memberInitList fails immediately and we
+// fall through to typeSpec (correct for plain return types like ': int').
+// If typeSpec were tried first, it would greedily consume the leading IDENTIFIER
+// as a qualifiedIdentifier and commit, leaving '(x), y(y)' unparse-able.
+returnTypeOrMemberInitList ::= memberInitList
+                             | staticDepList
+                             | typeSpec
+    { name = "return type or member initializer list" }
+
+memberInitList ::= memberInit (',' memberInit)*
+    { name = "member initializer list" }
+
+memberInit ::= IDENTIFIER '(' expressionList? ')'
+    { name = "member initializer" }
+
+staticDepList ::= staticDep (',' staticDep)*
+    { name = "static dependency list" }
+
+staticDep ::= qualifiedIdentifier '(' ')'
+    { name = "static dependency" }
+
+functionBody ::= blockStatement
+               | '->' ('default' | 'delete') ';'
+               | '->' qualifiedIdentifier ('(' typeSpecList? ')')? ';'
+               | ';'
+    { name = "function body" }
+
+typeSpecList ::= typeSpec (',' typeSpec)*
+    { name = "type list" }
+
+// ── Parameters ───────────────────────────────────────────────────────────────
+
+parameterList ::= parameterSpec (',' parameterSpec)*
+    { name = "parameter list" }
+
+parameterSpec ::= annotationDef* specifier* (IDENTIFIER '...'? ':')? typeSpec ('...' IDENTIFIER)? ('=' conditionalExpr)?
+    { name = "parameter" }
+
+// ── Variables ────────────────────────────────────────────────────────────────
+
+variableDecl ::= specifier* IDENTIFIER ':' typeSpec initialiser? ';'
+    { name = "variable declaration" }
+
+initialiser ::= '=' conditionalExpr
+              | '(' expressionList? ')' ('[' conditionalExpr ']')?
+              | braceInitList
+    { name = "initializer" }
+
+// ── Specifiers ───────────────────────────────────────────────────────────────
+
+specifier ::= 'public' | 'protected' | 'private'
+            | 'static' | 'const'     | 'abstract' | 'final' | 'override'
+    { name = "specifier (public/static/const/…)" }
+
+// ── Type Specifiers ───────────────────────────────────────────────────────────
+
+typeSpec ::= functionRefType
+           | qualifiedIdentifier '::' functionRefType
+           | 'const'? (fundamentalTypeSpec | qualifiedIdentifier) typeSuffix*
+    { name = "type" }
+
+fundamentalTypeSpec ::= 'unsigned'? ('byte' | 'char' | 'short' | 'int' | 'long'
+                                    | 'float' | 'double')
+                      | 'bool'
+    { name = "primitive type" }
+
+functionRefType ::= functionRefQualifier '(' typeList? ')'
+    { name = "function reference type" }
+
+functionRefQualifier ::= '*' | '?' | '+'
+    { name = "function reference qualifier (*/?/+)" }
+
+typeList ::= typeSpec (',' typeSpec)*
+    { name = "type list" }
+
+typeSuffix ::= '[' LIT_INTEGER? ']'
+             | '!'
+             | '*'
+             | '&'
+             | '+'
+             | '?'
+             | '#'
+    { name = "type suffix (*/&/[]/…)" }
+
+// ── Statements ───────────────────────────────────────────────────────────────
+
+statement ::= blockStatement
+            | returnStatement
+            | breakStatement
+            | ifElseStatement
+            | whileStatement
+            | forStatement
+            | throwStatement
+            | tryCatchStatement
+            | usingDecl
+            | variableDecl
+            | expressionStatement
+    { name = "statement" }
+
+blockStatement ::= '{' statement* '}'
+    { name = "block { … }" }
+
+returnStatement ::= 'return' expression? ';'
+    { name = "return statement" }
+
+breakStatement ::= 'break' ';'
+    { name = "break statement" }
+
+ifElseStatement ::= 'if' '(' expression ')' statement ('else' statement)?
+                  | 'if' '(' ifCondVarDecl ')' statement ('else' statement)?
+                  | 'if' '(' ifCondVarDeclList ';' conditionalExpr ')' statement ('else' statement)?
+                  | 'if' '(' ifCondVarDeclList ')' statement ('else' statement)?
+    { name = "if statement" }
+
+ifCondVarDeclList ::= ifCondVarDecl (';' ifCondVarDecl)*
+    { name = "if condition variable declaration list" }
+
+ifCondVarDecl ::= specifier* IDENTIFIER ':' typeSpec condVarInitialiser?
+    { name = "if condition variable declaration" }
+
+condVarInitialiser ::= '=' conditionalExpr
+                     | '(' expressionList? ')'
+                     | braceInitList
+    { name = "condition variable initializer" }
+
+whileStatement ::= 'while' '(' expression ')' statement
+    { name = "while statement" }
+
+forStatement ::= 'for' '(' (variableDecl | ';') expression? ';' expression? ')' statement
+    { name = "for statement" }
+
+throwStatement ::= 'throw' expression? ';'
+    { name = "throw statement" }
+
+tryCatchStatement ::= 'try' blockStatement catchClause* finallyClause?
+    { name = "try/catch statement" }
+
+catchClause ::= 'catch' '(' catchParameterDecl ')' blockStatement
+    { name = "catch clause" }
+
+finallyClause ::= 'finally' blockStatement
+    { name = "finally clause" }
+
+catchParameterDecl ::= 'const'? IDENTIFIER ':' typeSpec
+    { name = "catch parameter declaration" }
+
+expressionStatement ::= expression? ';'
+    { name = "expression statement" }
+
+// ── Expressions ──────────────────────────────────────────────────────────────
+
+expression ::= assignmentExpr (',' assignmentExpr)*
+    { name = "expression" }
+
+expressionList ::= assignmentExpr (',' assignmentExpr)*
+    { name = "expression list" }
+
+assignmentExpr ::= conditionalExpr (assignmentOperator assignmentExpr)?
+    { name = "assignment expression" }
+
+assignmentOperator ::= '=' | '*=' | '/=' | '%=' | '+=' | '-='
+                     | '>>=' | '<<=' | '&=' | '^=' | '|='
+    { name = "assignment operator" }
+
+conditionalExpr ::= logicalOrExpr ('?' conditionalExpr ':' conditionalExpr)?
+    { name = "conditional expression" }
+
+logicalOrExpr ::= logicalAndExpr ('||' logicalAndExpr)*
+    { name = "logical-or expression" }
+
+logicalAndExpr ::= inclusiveBinOrExpr ('&&' inclusiveBinOrExpr)*
+    { name = "logical-and expression" }
+
+inclusiveBinOrExpr ::= exclusiveBinOrExpr ('|' exclusiveBinOrExpr)*
+    { name = "bitwise-or expression" }
+
+exclusiveBinOrExpr ::= binAndExpr ('^' binAndExpr)*
+    { name = "bitwise-xor expression" }
+
+binAndExpr ::= equalityExpr ('&' equalityExpr)*
+    { name = "bitwise-and expression" }
+
+equalityExpr ::= relationalExpr (('==' | '!=') relationalExpr)*
+    { name = "equality expression" }
+
+relationalExpr ::= shiftingExpr (('<' | '>' | '<=' | '>=') shiftingExpr)*
+    { name = "relational expression" }
+
+shiftingExpr ::= additiveExpr (('<<' | '>>') additiveExpr)*
+    { name = "shift expression" }
+
+additiveExpr ::= multiplicativeExpr (('+' | '-') multiplicativeExpr)*
+    { name = "additive expression" }
+
+multiplicativeExpr ::= pmExpr (('*' | '/' | '%') pmExpr)*
+    { name = "multiplicative expression" }
+
+pmExpr ::= castExpr (('.*' | '->*') castExpr)*
+    { name = "pointer-to-member expression" }
+
+castExpr ::= '(' typeSpec ')' castExpr
+           | unaryExpr
+    { name = "cast expression" }
+
+unaryExpr ::= ('++' | '--' | '*' | '&' | '+' | '-' | '!' | '~' | '#') castExpr
+            | newExpr
+            | 'delete' castExpr
+            | postfixExpr
+    { name = "unary expression" }
+
+newExpr ::= 'new' typeName '(' expressionList? ')'
+          | 'new' typeName '(' expressionList? ')' '[' expression ']'
+          | 'new' typeName '[' expression? ']' braceInitList?
+          | 'new' typeName braceInitList
+    { name = "new expression" }
+
+typeName ::= qualifiedIdentifier
+           | fundamentalTypeSpec
+    { name = "type name" }
+
+postfixExpr ::= primaryExpr postfixOp*
+    { name = "postfix expression" }
+
+postfixOp ::= '++'
+            | '--'
+            | '...'
+            | braceInitList
+            | '[' ']' braceInitList
+            | '[' expression ']'
+            | '(' expressionList? ')'
+            | ('.' | '->') identifierExpr
+    { name = "postfix operator" }
+
+primaryExpr ::= literal
+              | 'this'
+              | '(' expression ')'
+              | annotationDef
+              | braceInitList
+              | identifierExpr
+    { name = "primary expression" }
+
+identifierExpr ::= templateQualifiedScopeExpr
+                 | qualifiedIdentifier
+    { name = "identifier" }
+
+// Expression-context Type<T>::member, ns::Type<T>::member, ::ns::Type<T>::member
+templateQualifiedScopeExpr ::= '::'? IDENTIFIER ('::' IDENTIFIER)* templateArgList ('::' IDENTIFIER)+
+    { name = "template-qualified scope expression" }
+
+// ── Literals ─────────────────────────────────────────────────────────────────
+
+literal ::= LIT_INTEGER
+           | LIT_FLOAT
+           | LIT_TRUE
+           | LIT_FALSE
+           | LIT_CHAR
+           | LIT_STRING
+           | LIT_NULL
+    { name = "literal" }
+
+// ── Brace Initializer Lists ───────────────────────────────────────────────────
+
+braceInitList ::= '{' '}'
+                | '{' initElement (',' initElement)* '}'
+                | '{' designatedInitElement (',' designatedInitElement)* '}'
+    { name = "brace initializer list { … }" }
+
+initElement ::= conditionalExpr
+              | /*empty*/
+    { name = "initializer element" }
+
+designatedInitElement ::= '.' designatedMemberName '=' conditionalExpr
+                        | '.' designatedMemberName '=' braceInitList
+                        | '.' designatedMemberName '(' expressionList? ')'
+    { name = "designated initializer (.member = …)" }
+
+designatedMemberName ::= (IDENTIFIER '::')* IDENTIFIER
+    { name = "member name" }
+

@@ -1,0 +1,847 @@
+(* ========================================================================== *)
+(*  K Language Grammar — EBNF                                                *)
+(*                                                                           *)
+(*  Copyright 2023-2026 Emilien Kia                                          *)
+(*  Licensed under the Apache License, Version 2.0                           *)
+(*                                                                           *)
+(*  This file is the authoritative EBNF grammar for the K language,          *)
+(*  derived from the recursive-descent parser in klang/src/parse/parser.cpp. *)
+(*                                                                           *)
+(*  Notation (ISO 14977 EBNF):                                               *)
+(*    { x }       — zero or more repetitions of x                            *)
+(*    [ x ]       — zero or one occurrence of x (optional)                   *)
+(*    x | y       — alternative: x or y                                      *)
+(*    ( x )       — grouping                                                 *)
+(*    'token'     — terminal / literal token                                 *)
+(*    (* ... *)   — comment                                                  *)
+(* ========================================================================== *)
+
+
+(* ========================================================================== *)
+(*  1. LEXICAL GRAMMAR                                                       *)
+(*                                                                           *)
+(*  Source encoding: UTF-8. Identifiers are restricted to ASCII letters,     *)
+(*  digits and '_'. Extended (non-ASCII) characters are only meaningful      *)
+(*  inside character/string literals and comments.                           *)
+(* ========================================================================== *)
+
+LineTerminator
+    = '\n'               (* LF *)
+    | '\r'               (* CR *)
+    | '\r' , '\n'        (* CR LF *)
+    ;
+
+WhiteSpace
+    = ' ' | '\t' | '\f' | LineTerminator
+    ;
+
+Comment
+    = '/*' , { ? any character ? } , '*/'       (* block comment *)
+    | '//' , { ? any character except LineTerminator ? }   (* line comment *)
+    ;
+
+(* ---------- Identifiers ------------------------------------------------- *)
+
+IdentifierLetter
+    = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J'
+    | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T'
+    | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+    | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j'
+    | 'k' | 'l' | 'm' | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't'
+    | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+    | '_'
+    ;
+
+Digit
+    = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+    ;
+
+IdentifierLetterOrDigit
+    = IdentifierLetter | Digit
+    ;
+
+Identifier
+    = IdentifierLetter , { IdentifierLetterOrDigit }
+    ;
+    (* Must not be a Keyword, nor consist solely of underscores. *)
+
+(* ---------- Keywords ----------------------------------------------------- *)
+
+Keyword
+    = 'bool'   | 'byte'    | 'char'      | 'short'    | 'int'    | 'long'
+    | 'float'  | 'double'  | 'unsigned'
+    | 'struct' | 'class'   | 'interface' | 'annotation'
+    | 'namespace' | 'module' | 'import' | 'using' | 'friend'
+    | 'static' | 'const'   | 'abstract'  | 'final'  | 'override'
+    | 'public' | 'protected' | 'private'
+    | 'this'   | 'return'
+    | 'if'     | 'else'    | 'while'     | 'for'    | 'break'
+    | 'new'    | 'delete'  | 'default'   | 'enum'   | 'union'
+    | 'operator'
+    | 'template' | 'typename' | 'generic'
+    | 'throw'  | 'try'     | 'catch'     | 'throws'  | 'finally'
+    ;
+
+(* ---------- Literals ----------------------------------------------------- *)
+
+HexDigit
+    = Digit | 'a' | 'b' | 'c' | 'd' | 'e' | 'f'
+            | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+    ;
+
+OctalDigit
+    = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7'
+    ;
+
+BinaryDigit
+    = '0' | '1'
+    ;
+
+IntegerSuffix
+    = 'u' | 'l' | 'ul' | 'lu' | 's' | 'b'
+    ;
+
+IntegerLiteral
+    = Digit , { Digit } , [ IntegerSuffix ]                      (* decimal *)
+    | '0x' , HexDigit , { HexDigit } , [ IntegerSuffix ]         (* hex *)
+    | '0' , OctalDigit , { OctalDigit } , [ IntegerSuffix ]      (* octal *)
+    | '0b' , BinaryDigit , { BinaryDigit } , [ IntegerSuffix ]   (* binary *)
+    ;
+
+FloatSuffix
+    = 'f' | 'd'
+    ;
+
+FloatLiteral
+    = Digit , { Digit } , '.' , { Digit } , [ FloatSuffix ]
+    | Digit , { Digit } , [ '.' , { Digit } ] , ( 'e' | 'E' ) , [ '+' | '-' ] , Digit , { Digit } , [ FloatSuffix ]
+    ;
+
+BooleanLiteral
+    = 'true' | 'false'
+    ;
+
+CharacterLiteral
+    = [ EncodingPrefix ] , "'" , ( ? any character except ' and \ ? | EscapeSequence ) , "'"
+    ;
+    (* A character literal denotes a single Unicode scalar value. With no       *)
+    (* prefix its type is 'char'. A prefix forces the element type and          *)
+    (* requires the value to fit in one code unit of that encoding:             *)
+    (*   u8  -> unsigned byte (U+0000..U+007F)                                  *)
+    (*   u / u16 -> unsigned short (U+0000..U+FFFF, no surrogates)              *)
+    (*   U / u32 -> char (any scalar value)                                     *)
+
+StringLiteral
+    = [ EncodingPrefix ] , '"' , { ? any character except " and \ ? | EscapeSequence } , '"'
+    ;
+    (* With no prefix the element type is determined by context (declared       *)
+    (* variable/parameter/return/cast type), falling back to the smallest of    *)
+    (* UTF-8 (unsigned byte[]), UTF-16 (unsigned short[]) or UTF-32 (char[]).    *)
+    (* A prefix forces the element type:                                        *)
+    (*   u8  -> unsigned byte[] (UTF-8)                                         *)
+    (*   u / u16 -> unsigned short[] (UTF-16)                                   *)
+    (*   U / u32 -> char[] (UTF-32)                                             *)
+
+EncodingPrefix
+    = 'u8' | 'u16' | 'u32' | 'u' | 'U'
+    ;
+    (* Must be immediately adjacent to the opening quote (no whitespace).       *)
+
+EscapeSequence
+    = '\' , ( 'n' | 'r' | 't' | 'a' | 'b' | 'f' | 'v' | '\' | "'" | '"' | '?' | '0' )
+    | '\' , OctalDigit , [ OctalDigit , [ OctalDigit ] ]    (* octal *)
+    | '\x' , HexDigit , { HexDigit }                        (* hexadecimal *)
+    | '\u' , HexDigit , HexDigit , HexDigit , HexDigit      (* 16-bit code point *)
+    | '\U' , HexDigit , HexDigit , HexDigit , HexDigit
+           , HexDigit , HexDigit , HexDigit , HexDigit      (* 32-bit code point *)
+    ;
+
+NullLiteral
+    = 'null'
+    ;
+
+Literal
+    = IntegerLiteral
+    | FloatLiteral
+    | BooleanLiteral
+    | CharacterLiteral
+    | StringLiteral
+    | NullLiteral
+    ;
+
+(* ---------- Punctuators -------------------------------------------------- *)
+
+Punctuator
+    = '(' | ')' | '{' | '}' | '[' | ']'
+    | ';' | ',' | '::' | '...' | '@'
+    ;
+
+(* ---------- Operators ---------------------------------------------------- *)
+
+Operator
+    = '.'  | '->'  | '.*' | '->*'
+    | '?'  | ':'   | '!'  | '~'
+    | '='  | '+'   | '-'  | '*'  | '/'
+    | '&'  | '|'   | '^'  | '%'  | '#'
+    | '<<' | '>>'
+    | '+=' | '-='  | '*=' | '/=' | '%='
+    | '&=' | '|='  | '^=' | '<<=' | '>>='
+    | '==' | '!='  | '<'  | '>'  | '<=' | '>='
+    | '&&' | '||'  | '++' | '--' | '**'
+    ;
+
+
+(* ========================================================================== *)
+(*  2. SYNTACTIC GRAMMAR                                                     *)
+(* ========================================================================== *)
+
+(* ---------- Compilation Unit --------------------------------------------- *)
+
+Unit
+    = [ ModuleDeclaration ] , { ImportDeclaration } , { Declaration }
+    ;
+
+ModuleDeclaration
+    = 'module' , QualifiedIdentifier , ';'
+    ;
+
+ImportDeclaration
+    = 'import' , QualifiedIdentifier , ';'
+    ;
+
+QualifiedIdentifier
+    = [ '::' ] , IdentifierSegment , { '::' , IdentifierSegment }
+    ;
+
+IdentifierSegment
+    = Identifier , [ TemplateArgList ]
+    ;
+
+(* ---------- Templates ---------------------------------------------------- *)
+(*                                                                           *)
+(* A TemplateDeclaration prefixes an aggregate or function declaration to     *)
+(* introduce compile-time parameters.  Templates follow a monomorphization   *)
+(* model: each unique set of arguments produces a distinct concrete entity.  *)
+(*                                                                           *)
+(* Template parameters are either type parameters (introduced by 'typename', *)
+(* 'struct', 'class', or 'interface') or value parameters (introduced by     *)
+(* a type identifier or TypeSpec).                                           *)
+(*                                                                           *)
+(* Type parameters may have an optional base-type constraint (':' TypeSpec)   *)
+(* and a default type ('=' TypeSpec).  Value parameters must have a          *)
+(* compile-time-evaluable type and may have a default value.                 *)
+(*                                                                           *)
+(* Disambiguation rules:                                                     *)
+(*   - When the parser encounters '<' after an Identifier, it checks         *)
+(*     whether a template declaration with that name exists in scope.        *)
+(*     If yes, '<' opens a TemplateArgList; otherwise it is the less-than    *)
+(*     comparison operator.                                                  *)
+(*   - Inside a TemplateArgList, '>' closes the list.  Nested '<'/'>' for    *)
+(*     nested template arguments are balanced by counting.                   *)
+(*   - '>>' is split into two '>' tokens when inside nested template         *)
+(*     argument lists (e.g., Pair<Pair<int>>).                               *)
+(* ========================================================================= *)
+
+TemplateDeclaration
+    = 'template' , '<' , TemplateParameterList , '>'
+    ;
+
+TemplateParameterList
+    = TemplateParameter , { ',' , TemplateParameter }
+    ;
+
+TemplateParameter
+    = TemplateParameterKind , [ '...' ] , Identifier , [ ':' , TypeSpec ] , [ '=' , ConditionalExpr ]
+    ;
+    (* For type parameters: the optional ':' TypeSpec is a base-type constraint.     *)
+    (* For type parameters: the optional '=' ConditionalExpr is a default type.      *)
+    (* For value parameters: the optional '=' ConditionalExpr is a default value.    *)
+    (* Once a parameter has a default, all subsequent parameters must also have one.  *)
+    (* '...' makes this a parameter pack (only valid for type parameters).           *)
+    (* Pack parameters cannot have constraints or defaults.                          *)
+
+TemplateParameterKind
+    = 'typename'                                                 (* any type *)
+    | 'struct'                                                   (* must be a struct type *)
+    | 'class'                                                    (* must be a class type *)
+    | 'interface'                                                (* must be an interface type *)
+    | Identifier                                                 (* value parameter — identifier names the type *)
+    | TypeSpec                                                   (* value parameter — explicit type *)
+    ;
+
+TemplateArgList
+    = '<' , TemplateArg , { ',' , TemplateArg } , '>'
+    ;
+    (* An empty argument list '<>' is valid when all parameters have defaults. *)
+
+TemplateArg
+    = TypeSpec                                                   (* type argument *)
+    | ConditionalExpr                                            (* value argument — must be a compile-time constant *)
+    ;
+
+(* ---------- Declarations ------------------------------------------------- *)
+
+Declaration
+    = VisibilityDecl
+    | NamespaceDecl
+    | UsingDecl
+    | FriendDecl
+    | AggregateDecl
+    | EnumDecl
+    | FunctionDecl
+    | VariableDecl
+    ;
+
+VisibilityDecl
+    = ( 'public' | 'protected' | 'private' ) , ':'
+    ;
+
+NamespaceDecl
+    = 'namespace' , [ Identifier ] , '{' , { Declaration } , '}'
+    ;
+
+UsingDecl
+    = 'using' , [ UsingFilter ] , [ Identifier , '=' ] , QualifiedIdentifier , ';'
+    ;
+
+UsingFilter
+    = 'namespace' | 'struct' | 'interface' | 'class'
+    ;
+
+FriendDecl
+    = 'friend' , [ FriendFilter ] , QualifiedIdentifier , ';'
+    ;
+
+FriendFilter
+    = 'struct' | 'interface' | 'class'
+    ;
+
+(* ---------- Aggregates (struct / class / interface / annotation) ---------- *)
+
+AggregateDecl
+    = { AnnotationDef } , [ TemplateDeclaration ] , { Specifier } ,
+      ( 'struct' | 'class' | 'interface' | 'annotation' ) ,
+      Identifier ,
+      [ ':' , BaseClause ] ,
+      '{' , { Declaration } , '}'
+    ;
+
+BaseClause
+    = BaseSpec , { ',' , BaseSpec }
+    ;
+
+BaseSpec
+    = [ 'public' | 'protected' | 'private' ] , QualifiedIdentifier
+    ;
+
+(* ---------- Enumerations ------------------------------------------------- *)
+
+EnumDecl
+    = { Specifier } , 'enum' , Identifier ,
+      [ ':' , TypeSpec ] ,
+      '{' , { EnumEntry } , '}' , ';'
+    ;
+    (* Disambiguation for ':' TypeSpec:
+       - if TypeSpec resolves to an enum type, it is the base enum (derivation);
+       - if TypeSpec resolves to a primitive integer or aggregate type, it is
+         the explicit underlying type (integer-backed or object-backed enum). *)
+
+EnumEntry
+    = Identifier , [ '=' , ( IntegerLiteral | Identifier )
+                   | BraceInitList
+                   | '(' , [ ExpressionList ] , ')' ] ,
+      [ 'default' ] , ';'
+    ;
+    (* Supported forms include:
+       - integer/alias form: NAME = 1, NAME = OTHER
+       - object/designated init: NAME{ ... }
+       - constructor/default-init form: NAME(args...), NAME()
+       - implicit value form: NAME
+    *)
+
+(* ---------- Annotations ------------------------------------------------- *)
+
+(* ---------- Unions ------------------------------------------------------- *)
+
+UnionDecl
+    = { AnnotationDef } , { Specifier } ,
+      'union' , Identifier ,
+      [ ':' , QualifiedIdentifier ]  (* optional single parent union *)
+      '{' , { UnionMemberDecl } , '}'
+    ;
+    (* A discriminated (tagged) union.  At runtime a hidden uint32 discriminant
+       tracks which alternative is active.  Member access performs a runtime
+       check; assignment to a different alternative updates the discriminant.
+
+       Inheritance:
+       - A union may inherit from exactly one parent union.
+       - All parent alternatives are accessible with their original discriminant values.
+       - New alternatives are assigned discriminant values starting at
+         parent.total_alternative_count().
+       - The synthesised Kind enum covers the full inheritance chain.
+       - Assigning a derived union to a parent union variable (upcast) performs a
+         runtime discriminant check; if the active alternative is derived-only, a
+         fatal trap is emitted.
+       - Assigning a parent union to a derived union variable (downcast) is always
+         valid (parent discriminant values are a subset of derived's range).
+
+       Restrictions:
+       - No functions, constructors, nested types inside a union body.
+       - Drain addresser (#) is forbidden on alternative types.
+       - Template unions cannot have an inheritance clause. *)
+
+UnionMemberDecl
+    = [ 'const' ] , Identifier , ':' , TypeSpec , ';'
+    ;
+
+(* ---------- Annotations ------------------------------------------------- *)
+
+AnnotationDef
+    = '@' , QualifiedIdentifier
+    | '@' , QualifiedIdentifier , '(' , [ ExpressionList ] , ')'
+    | '@' , QualifiedIdentifier , BraceInitList
+    ;
+
+(* ---------- Functions ---------------------------------------------------- *)
+
+FunctionDecl
+    = { AnnotationDef } , [ TemplateDeclaration | GenericDeclaration ] , { Specifier } ,
+      ( FunctionHead | OperatorFunctionHead | DestructorHead ) ,
+      '(' , [ ParameterList ] , ')' ,
+      [ NamedReturnVar ] ,
+      [ ':' , ( ReturnTypeOrMemberInitList ) ] ,
+      [ ThrowsClause ] ,
+      FunctionBody
+    ;
+
+FunctionHead
+    = Identifier
+    ;
+
+ThrowsClause
+    = 'throws' , TypeSpec , { ',' , TypeSpec }
+    ;
+
+DestructorHead
+    = '~' , Identifier
+    ;
+
+OperatorFunctionHead
+    = 'operator' , OperatorSymbol
+    | 'operator' , '(' , ')'                                    (* cast operator *)
+    ;
+
+OperatorSymbol
+    = '+' | '-' | '*' | '/' | '%'
+    | '&' | '|' | '^' | '~'
+    | '<<' | '>>'
+    | '&&' | '||' | '!'
+    | '==' | '!=' | '<' | '>' | '<=' | '>='
+    | '='  | '+=' | '-=' | '*=' | '/=' | '%='
+    | '&=' | '|=' | '^=' | '<<=' | '>>='
+    | '++' , '_'                                                 (* prefix ++ *)
+    | '--' , '_'                                                 (* prefix -- *)
+    | '_' , '++'                                                 (* postfix ++ *)
+    | '_' , '--'                                                 (* postfix -- *)
+    ;
+
+NamedReturnVar
+    = Identifier , ':' , TypeSpec , [ NamedReturnInit ]
+    ;
+
+NamedReturnInit
+    = '=' , ConditionalExpr
+    | '(' , [ ExpressionList ] , ')'
+    ;
+
+ReturnTypeOrMemberInitList
+    = TypeSpec                                                   (* return type *)
+    | MemberInitList                                             (* constructor member init *)
+    | StaticDepList                                              (* static dependency list *)
+    ;
+
+MemberInitList
+    = MemberInit , { ',' , MemberInit }
+    ;
+
+MemberInit
+    = Identifier , '(' , [ ExpressionList ] , ')'
+    ;
+
+StaticDepList
+    = StaticDep , { ',' , StaticDep }
+    ;
+
+StaticDep
+    = QualifiedIdentifier , '(' , ')'
+    ;
+
+FunctionBody
+    = BlockStatement
+    | '->' , ( 'default' | 'delete' ) , ';'                     (* aliasing *)
+    | '->' , QualifiedIdentifier ,
+             [ '(' , [ TypeSpecList ] , ')' ] , ';'              (* redirect *)
+    | ';'                                                        (* abstract / bodyless *)
+    ;
+
+TypeSpecList
+    = TypeSpec , { ',' , TypeSpec }
+    ;
+
+(* ---------- Parameters --------------------------------------------------- *)
+
+ParameterList
+    = ParameterSpec , { ',' , ParameterSpec }
+    ;
+
+ParameterSpec
+    = { AnnotationDef } , { Specifier } ,
+      [ Identifier , [ '...' ] , ':' ] ,
+      TypeSpec ,
+      [ '...' , Identifier ] ,                                   (* pack expansion: Type... name *)
+      [ '=' , ConditionalExpr ]
+    ;
+    (* The first '...' form (name... : Type) is varargs.                     *)
+    (* The second '...' form (Type ... name, no colon) is pack expansion —   *)
+    (* the Type must refer to a template parameter pack.                     *)
+
+(* ---------- Variables ---------------------------------------------------- *)
+
+VariableDecl
+    = { Specifier } , Identifier , ':' , TypeSpec , [ Initialiser ] , ';'
+    ;
+
+Initialiser
+    = '=' , ConditionalExpr
+    | '(' , [ ExpressionList ] , ')' , [ '[' , ConditionalExpr , ']' ]
+    | BraceInitList
+    ;
+
+(* ---------- Specifiers --------------------------------------------------- *)
+
+Specifier
+    = 'public' | 'protected' | 'private'
+    | 'static' | 'const' | 'abstract' | 'final' | 'override'
+    ;
+
+(* ---------- Type Specifiers ---------------------------------------------- *)
+
+TypeSpec
+    = FunctionRefType
+    | QualifiedIdentifier , '::' , FunctionRefType               (* member fn ref *)
+    | [ 'const' ] , ( FundamentalTypeSpec | QualifiedIdentifier ) , { TypeSuffix }
+    ;
+
+FundamentalTypeSpec
+    = 'char'                                  (* 32-bit unsigned Unicode scalar value (UTF-32) *)
+    | [ 'unsigned' ] , ( 'byte' | 'short' | 'int' | 'long'
+                        | 'float' | 'double' )
+    | 'bool'
+    ;
+    (* 'char' has no signed/unsigned variant. The 1-byte integer types are      *)
+    (* 'byte' (signed) and 'unsigned byte'. 'unsigned char' is not a valid type.*)
+
+FunctionRefType
+    = FunctionRefQualifier , '(' , [ TypeList ] , ')'
+    ;
+
+FunctionRefQualifier
+    = '*' | '?' | '+'
+    ;
+
+TypeList
+    = TypeSpec , { ',' , TypeSpec }
+    ;
+
+TypeSuffix
+    = '[' , [ IntegerLiteral ] , ']'                             (* array *)
+    | '!'                                                        (* owner *)
+    | '*'                                                        (* pointer *)
+    | '&'                                                        (* reference *)
+    | '+'                                                        (* link *)
+    | '?'                                                        (* view *)
+    | '#'                                                        (* drain *)
+    ;
+
+(* ---------- Statements --------------------------------------------------- *)
+
+Statement
+    = BlockStatement
+    | ReturnStatement
+    | BreakStatement
+    | IfElseStatement
+    | WhileStatement
+    | ForStatement
+    | ThrowStatement
+    | TryCatchStatement
+    | UsingDecl
+    | VariableDecl
+    | ExpressionStatement
+    ;
+
+BlockStatement
+    = '{' , { Statement } , '}'
+    ;
+
+ReturnStatement
+    = 'return' , [ Expression ] , ';'
+    ;
+
+BreakStatement
+    = 'break' , ';'
+    ;
+
+IfElseStatement
+    = 'if' , '(' , Expression , ')' , Statement , [ 'else' , Statement ]
+    | 'if' , '(' , IfCondVarDecl , ')' , Statement , [ 'else' , Statement ]
+    | 'if' , '(' , IfCondVarDeclList , ';' , ConditionalExpr , ')' , Statement , [ 'else' , Statement ]
+    | 'if' , '(' , IfCondVarDeclList , ')' , Statement , [ 'else' , Statement ]
+    ;
+
+IfCondVarDeclList
+    = IfCondVarDecl , { ';' , IfCondVarDecl }
+    ;
+
+IfCondVarDecl
+    = { Specifier } , Identifier , ':' , TypeSpec , [ CondVarInitialiser ]
+    ;
+    (* Same form as a VariableDecl but without the trailing semicolon.          *)
+    (* The declared variable is scoped to the if statement (then + else blocks).*)
+    (*                                                                          *)
+    (* Single-variable form (classic if-let):                                   *)
+    (*   if (v : T = expr) { ... }                                              *)
+    (*   The variable value, cast to bool, determines the branch taken.         *)
+    (*   For addressor types (ref, link, ptr, view, owner), a null initialiser  *)
+    (*   triggers a soft-fail: the else branch is taken and the variable does   *)
+    (*   not exist on that path. Explicit union alternative access used as the  *)
+    (*   initializer (u.alt) also soft-fails when the requested alternative is  *)
+    (*   not active.                                                            *)
+    (*   For non-addressor types (int, struct, etc.), bool cast applies.        *)
+    (*                                                                          *)
+    (* Multi-variable soft-fail form (no trailing test expression):             *)
+    (*   if (v1 : T1 = e1; v2 : T2 = e2; ...) { ... }                         *)
+    (*   Variables are declared left to right; later declarations may reference *)
+    (*   earlier ones. Addressor null failure and union alternative mismatch    *)
+    (*   during initialization both soft-fail to else (or continue).            *)
+    (*   Non-addressor variables are never null-checked. No variables are       *)
+    (*   visible in else.                                                       *)
+    (*   Previously-initialized variables are cleaned up before jumping.        *)
+    (*                                                                          *)
+    (* Condition-variable form with trailing test expression:                   *)
+    (*   if (v1 : T1 = e1; v2 : T2 = e2; ...; testExpr) { ... }               *)
+    (*   Variables are declared left to right; later declarations may reference *)
+    (*   earlier ones. The test expression (after the last ';') determines the  *)
+    (*   branch taken. No soft-fail: null assignments to ref/link and union     *)
+    (*   alternative mismatches are fatal. All variables are accessible in both *)
+    (*   then and else branches.                                                *)
+
+CondVarInitialiser
+    = '=' , ConditionalExpr
+    | '(' , [ ExpressionList ] , ')'
+    | BraceInitList
+    ;
+
+WhileStatement
+    = 'while' , '(' , Expression , ')' , Statement
+    ;
+
+ForStatement
+    = 'for' , '(' , ( VariableDecl | ';' ) ,
+                     [ Expression ] , ';' ,
+                     [ Expression ] ,
+              ')' , Statement
+    ;
+
+ThrowStatement
+    = 'throw' , Expression , ';'
+    | 'throw' , ';'
+    ;
+    (* The first form throws a new exception. The expression must evaluate to a
+       class type that derives from ::k::Throwable or is ::k::Throwable itself.
+       Throwing a non-Throwable type is a compile-time error (0x01C0).
+       The second form (bare 'throw;') is a rethrow — it re-throws the exception
+       currently being handled. It is only valid inside a catch block; using it
+       elsewhere is a compile-time error (0x01C9). *)
+
+TryCatchStatement
+    = 'try' , BlockStatement , { CatchClause } , [ FinallyClause ]
+    ;
+    (* At least one CatchClause or the FinallyClause must be present. *)
+
+FinallyClause
+    = 'finally' , BlockStatement
+    ;
+
+CatchClause
+    = 'catch' , '(' , CatchParameterDecl , ')' , BlockStatement
+    ;
+
+CatchParameterDecl
+    = [ 'const' ] , Identifier , ':' , TypeSpec
+    ;
+    (* The catch parameter type must use a reference addresser (T&).
+       The type must derive from ::k::Throwable.
+       References guarantee non-null and non-reassignable binding.      *)
+
+ExpressionStatement
+    = [ Expression ] , ';'
+    ;
+
+(* ---------- Expressions -------------------------------------------------- *)
+
+Expression
+    = AssignmentExpr , { ',' , AssignmentExpr }
+    ;
+
+ExpressionList
+    = AssignmentExpr , { ',' , AssignmentExpr }
+    ;
+
+AssignmentExpr
+    = ConditionalExpr , [ AssignmentOperator , AssignmentExpr ]
+    ;
+
+AssignmentOperator
+    = '=' | '*=' | '/=' | '%=' | '+=' | '-='
+    | '>>=' | '<<=' | '&=' | '^=' | '|='
+    ;
+
+ConditionalExpr
+    = LogicalOrExpr , [ '?' , ConditionalExpr , ':' , ConditionalExpr ]
+    ;
+
+LogicalOrExpr
+    = LogicalAndExpr , { '||' , LogicalAndExpr }
+    ;
+
+LogicalAndExpr
+    = InclusiveBinOrExpr , { '&&' , InclusiveBinOrExpr }
+    ;
+
+InclusiveBinOrExpr
+    = ExclusiveBinOrExpr , { '|' , ExclusiveBinOrExpr }
+    ;
+
+ExclusiveBinOrExpr
+    = BinAndExpr , { '^' , BinAndExpr }
+    ;
+
+BinAndExpr
+    = EqualityExpr , { '&' , EqualityExpr }
+    ;
+
+EqualityExpr
+    = RelationalExpr , { ( '==' | '!=' ) , RelationalExpr }
+    ;
+
+RelationalExpr
+    = ShiftingExpr , { ( '<' | '>' | '<=' | '>=' ) , ShiftingExpr }
+    ;
+
+ShiftingExpr
+    = AdditiveExpr , { ( '<<' | '>>' ) , AdditiveExpr }
+    ;
+
+AdditiveExpr
+    = MultiplicativeExpr , { ( '+' | '-' ) , MultiplicativeExpr }
+    ;
+
+MultiplicativeExpr
+    = PmExpr , { ( '*' | '/' | '%' ) , PmExpr }
+    ;
+
+PmExpr
+    = CastExpr , { ( '.*' | '->*' ) , CastExpr }
+    ;
+
+CastExpr
+    = '(' , TypeSpec , ')' , CastExpr
+    | UnaryExpr
+    ;
+
+UnaryExpr
+    = ( '++' | '--' | '*' | '&' | '+' | '-' | '!' | '~' | '#' ) , CastExpr
+    | NewExpr
+    | 'delete' , CastExpr
+    | PostfixExpr
+    ;
+
+NewExpr
+    = 'new' , TypeName , '(' , [ ExpressionList ] , ')'                    (* single object *)
+    | 'new' , TypeName , '(' , [ ExpressionList ] , ')' , '[' , Expression , ']'
+                                                                            (* uniform array *)
+    | 'new' , TypeName , '[' , [ Expression ] , ']' , [ BraceInitList ]    (* array *)
+    | 'new' , TypeName , BraceInitList                                      (* brace-init array *)
+    ;
+
+TypeName
+    = QualifiedIdentifier
+    | FundamentalTypeSpec
+    ;
+
+PostfixExpr
+    = PrimaryExpr , { PostfixOp }
+    ;
+
+PostfixOp
+    = '++'
+    | '--'
+    | '...'                                                      (* pack expansion *)
+    | BraceInitList                                              (* temporary object: T{...} *)
+    | '[' , ']' , BraceInitList                                  (* temporary array: T[]{...} *)
+    | '[' , Expression , ']'
+    | '(' , [ ExpressionList ] , ')'
+    | ( '.' | '->' ) , IdentifierExpr
+    ;
+
+PrimaryExpr
+    = Literal
+    | 'this'
+    | '(' , Expression , ')'
+    | AnnotationInitExpr
+    | BraceInitList
+    | IdentifierExpr
+    ;
+
+AnnotationInitExpr
+    = AnnotationDef
+    ;
+
+IdentifierExpr
+    = QualifiedIdentifier
+    | TemplateQualifiedScopeExpr
+    ;
+
+TemplateQualifiedScopeExpr
+    = [ '::' ]
+    , Identifier , { '::' , Identifier }
+    , TemplateArgList
+    , '::' , Identifier , { '::' , Identifier }
+    ;
+    (* Expression context supports Type<T>::member, ns::Type<T>::member,
+       and ::ns::Type<T>::member forms. *)
+
+(* ---------- Brace Initializer Lists ------------------------------------- *)
+
+BraceInitList
+    = '{' , '}'
+    | '{' , InitElement , { ',' , InitElement } , '}'
+    | '{' , DesignatedInitElement , { ',' , DesignatedInitElement } , '}'
+    ;
+    (* Positional and designated initializers cannot be mixed
+       in the same brace-init list. *)
+
+InitElement
+    = ConditionalExpr
+    |                                                            (* empty — default init *)
+    ;
+
+DesignatedInitElement
+    = '.' , DesignatedMemberName , '=' , ConditionalExpr
+    | '.' , DesignatedMemberName , '=' , BraceInitList           (* nested struct *)
+    | '.' , DesignatedMemberName , '(' , [ ExpressionList ] , ')'
+    ;
+
+DesignatedMemberName
+    = [ Identifier , '::' , { Identifier , '::' } ] , Identifier
+    ;

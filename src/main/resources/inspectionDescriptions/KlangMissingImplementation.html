@@ -1,0 +1,18 @@
+<html>
+<body>
+Reports a concrete <code>class</code>/<code>struct</code>/<code>annotation</code> declaration that
+does not implement every abstract method it inherits (transitively — inheritance is always virtual
+in K) from its base <code>interface</code>s or <code>abstract</code> classes.
+<p>
+The class name is highlighted. Two quick fixes are offered: generate <code>override</code> stubs
+for every missing method, or mark the class itself <code>abstract</code>.
+</p>
+<p>
+Skipped (fail-soft): <code>interface</code> declarations (implicitly abstract), aggregates already
+marked <code>abstract</code>, and template/generic aggregate definitions (parametrised member set).
+An interface member carrying the <code>default</code> specifier already has a body and does not
+require an override.
+</p>
+</body>
+</html>
+

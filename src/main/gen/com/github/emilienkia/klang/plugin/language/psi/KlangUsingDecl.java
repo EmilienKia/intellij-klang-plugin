@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface KlangUsingDecl extends PsiElement {
 
-  @NotNull
+  @Nullable
   KlangQualifiedIdentifier getQualifiedIdentifier();
 
   @Nullable

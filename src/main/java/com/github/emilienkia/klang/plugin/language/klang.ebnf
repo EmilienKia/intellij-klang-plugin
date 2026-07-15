@@ -279,6 +279,13 @@ TemplateArg
     | ConditionalExpr                                            (* value argument — must be a compile-time constant *)
     ;
 
+GenericDeclaration
+    = 'generic' , '<' , TemplateParameterList , '>'
+    ;
+    (* Like TemplateDeclaration but restricted to type parameters only.
+       Value parameters (Identifier or TypeSpec TemplateParameterKind) are forbidden.
+       GenericDeclaration can prefix aggregate and function declarations. *)
+
 (* ---------- Declarations ------------------------------------------------- *)
 
 Declaration
@@ -287,10 +294,18 @@ Declaration
     | UsingDecl
     | FriendDecl
     | AggregateDecl
+    | UnionDecl
     | EnumDecl
     | FunctionDecl
     | VariableDecl
     ;
+    (* A stray ';' standing where a Declaration is expected (between two
+       declarations or after the last one) is an empty declaration: it is
+       consumed and reported with a warning, in every declaration context
+       (unit, namespace, aggregate, ...). This is why block declarations
+       (struct, class, interface, annotation, union, enum) never need a
+       trailing ';'. Non-block declarations (using, friend, variable, ...)
+       still require their own terminating ';'. *)
 
 VisibilityDecl
     = ( 'public' | 'protected' | 'private' ) , ':'
@@ -319,7 +334,7 @@ FriendFilter
 (* ---------- Aggregates (struct / class / interface / annotation) ---------- *)
 
 AggregateDecl
-    = { AnnotationDef } , [ TemplateDeclaration ] , { Specifier } ,
+    = { AnnotationDef } , [ TemplateDeclaration | GenericDeclaration ] , { Specifier } ,
       ( 'struct' | 'class' | 'interface' | 'annotation' ) ,
       Identifier ,
       [ ':' , BaseClause ] ,
@@ -339,8 +354,11 @@ BaseSpec
 EnumDecl
     = { Specifier } , 'enum' , Identifier ,
       [ ':' , TypeSpec ] ,
-      '{' , { EnumEntry } , '}' , ';'
+      '{' , { EnumEntry } , '}'
     ;
+    (* Like every block declaration, an enum has no trailing ';'. A stray ';'
+       after the closing brace is tolerated as an empty declaration (with a
+       warning) by the enclosing declaration list. *)
     (* Disambiguation for ':' TypeSpec:
        - if TypeSpec resolves to an enum type, it is the base enum (derivation);
        - if TypeSpec resolves to a primitive integer or aggregate type, it is
@@ -406,12 +424,19 @@ AnnotationDef
 
 FunctionDecl
     = { AnnotationDef } , [ TemplateDeclaration | GenericDeclaration ] , { Specifier } ,
-      ( FunctionHead | OperatorFunctionHead | DestructorHead ) ,
-      '(' , [ ParameterList ] , ')' ,
-      [ NamedReturnVar ] ,
-      [ ':' , ( ReturnTypeOrMemberInitList ) ] ,
-      [ ThrowsClause ] ,
-      FunctionBody
+      (   (* Standard function, regular operator, subscript operator, destructor *)
+          ( FunctionHead | OperatorFunctionHead | DestructorHead ) ,
+          '(' , [ ParameterList ] , ')' ,
+          [ NamedReturnVar ] ,
+          [ ':' , ReturnTypeOrMemberInitList ] ,
+          [ ThrowsClause ] ,
+          FunctionBody
+      |   (* Casting / conversion operator — the '()' is the operator symbol, no param list follows *)
+          CastOperatorFunctionHead ,
+          [ ':' , TypeSpec ] ,                                   (* type is required unless body is '-> delete' *)
+          [ ThrowsClause ] ,
+          FunctionBody
+      )
     ;
 
 FunctionHead
@@ -428,7 +453,11 @@ DestructorHead
 
 OperatorFunctionHead
     = 'operator' , OperatorSymbol
-    | 'operator' , '(' , ')'                                    (* cast operator *)
+    | 'operator' , '[' , ']'                                     (* subscript operator *)
+    ;
+
+CastOperatorFunctionHead
+    = 'operator' , '(' , ')'                                     (* casting / conversion operator *)
     ;
 
 OperatorSymbol
@@ -478,7 +507,7 @@ StaticDep
 
 FunctionBody
     = BlockStatement
-    | '->' , ( 'default' | 'delete' ) , ';'                     (* aliasing *)
+    | '->' , ( 'default' | 'delete' ) , ';'                     (* aliasing; '-> default' only for constructors and assignment operators *)
     | '->' , QualifiedIdentifier ,
              [ '(' , [ TypeSpecList ] , ')' ] , ';'              (* redirect *)
     | ';'                                                        (* abstract / bodyless *)
@@ -521,7 +550,7 @@ Initialiser
 
 Specifier
     = 'public' | 'protected' | 'private'
-    | 'static' | 'const' | 'abstract' | 'final' | 'override'
+    | 'static' | 'const' | 'abstract' | 'final' | 'override' | 'default'
     ;
 
 (* ---------- Type Specifiers ---------------------------------------------- *)

@@ -33,6 +33,13 @@ import com.github.emilienkia.klang.plugin.language.psi.KlangTypes;
 WHITE_SPACE             = [ \t\f\r\n]+
 
 // ── Comments ──────────────────────────────────────────────────────────────────
+// Documentation comments follow the Javadoc / Doxygen formalism. They are NOT part of
+// the K grammar (the compiler handles them specially) but are recognised here so the
+// editor can highlight them differently from ordinary comments.
+//   - line doc:  /// …            (exactly three slashes; //// … stays a plain comment)
+//   - block doc: /** … */         (but /**/ is an empty plain block comment, not a doc)
+LINE_DOC_COMMENT        = "///" ( [^/\r\n] [^\r\n]* )?
+BLOCK_DOC_COMMENT       = "/**" ~"*/"
 LINE_COMMENT            = "//" [^\r\n]*
 BLOCK_COMMENT           = "/*" ([^*] | "*"+ [^/*])* "*"+ "/"
 
@@ -79,6 +86,10 @@ LIT_STRING              = {ENC_PREFIX}? "\"" ( {ESCAPE_SEQ} | [^\"\\] )* "\""
     {WHITE_SPACE}               { return TokenType.WHITE_SPACE; }
 
     // ── Comments ──────────────────────────────────────────────────────────
+    // Documentation comments must be tried BEFORE the ordinary comment rules:
+    // for equal-length matches JFlex picks the rule listed first.
+    {LINE_DOC_COMMENT}          { return KlangTypes.LINE_DOC_COMMENT; }
+    {BLOCK_DOC_COMMENT}         { return KlangTypes.BLOCK_DOC_COMMENT; }
     {LINE_COMMENT}              { return KlangTypes.LINE_COMMENT; }
     {BLOCK_COMMENT}             { return KlangTypes.BLOCK_COMMENT; }
 

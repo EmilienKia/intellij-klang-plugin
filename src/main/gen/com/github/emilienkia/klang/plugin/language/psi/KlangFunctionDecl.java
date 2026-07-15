@@ -11,6 +11,9 @@ public interface KlangFunctionDecl extends KlangNamedElement {
   List<KlangAnnotationDef> getAnnotationDefList();
 
   @Nullable
+  KlangCastOperatorFunctionHead getCastOperatorFunctionHead();
+
+  @Nullable
   KlangDestructorHead getDestructorHead();
 
   @NotNull
@@ -42,5 +45,8 @@ public interface KlangFunctionDecl extends KlangNamedElement {
 
   @Nullable
   KlangThrowsClause getThrowsClause();
+
+  @Nullable
+  KlangTypeSpec getTypeSpec();
 
 }

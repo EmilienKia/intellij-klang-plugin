@@ -1,0 +1,31 @@
+<html>
+<body>
+Reports references that cannot be resolved to any declaration — the K spec's
+<code>Undefined symbol</code> error (&sect;16).
+<p>
+Covers names used as expressions, qualified names in type / directive positions
+(<code>typeSpec</code>, <code>base</code>, <code>using</code>, <code>friend</code>,
+<code>@annotation</code>, &hellip;) and member accesses (<code>a.b</code>, <code>a-&gt;b</code>).
+</p>
+<p>
+The check is fail-soft to avoid false positives:
+</p>
+<ul>
+    <li>fundamental types and keywords carry no reference and are never flagged;</li>
+    <li><b>deferred resolution</b> (&sect;16): a name in <em>callee</em> position
+        (<code>Name(args)</code> or <code>recv.member(args)</code>) is left untouched because it
+        may legitimately be a unified-call-syntax or overload candidate;</li>
+    <li>nothing is reported while project indexes are still building (dumb mode).</li>
+</ul>
+<p>
+When an unresolved simple name is declared by another module, an <em>Add import</em> quick fix
+proposes the module(s) to import.
+</p>
+<p>
+<b>Note:</b> cross-module / external-symbol resolution (<code>EXTERNAL_LOOKUP</code>, &sect;5.8) is
+not yet fully modelled, so a symbol living in an un-imported external module is reported as
+unresolved and relies on the add-import quick fix.
+</p>
+</body>
+</html>
+

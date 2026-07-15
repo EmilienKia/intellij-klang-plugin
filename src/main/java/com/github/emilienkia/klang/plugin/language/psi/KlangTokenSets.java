@@ -7,7 +7,9 @@ public class KlangTokenSets {
     // ── Comments ──────────────────────────────────────────────────────────────
     public static final TokenSet COMMENTS = TokenSet.create(
             KlangTypes.LINE_COMMENT,
-            KlangTypes.BLOCK_COMMENT
+            KlangTypes.BLOCK_COMMENT,
+            KlangTypes.LINE_DOC_COMMENT,
+            KlangTypes.BLOCK_DOC_COMMENT
     );
 
     // ── Keywords (all) ────────────────────────────────────────────────────────

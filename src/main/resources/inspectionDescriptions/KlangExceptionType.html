@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports <code>throw</code>, <code>catch</code> and <code>throws</code> exception types that do
+not derive from <code>::k::Throwable</code> (or are not <code>::k::Throwable</code> itself).
+<p>
+In K, only a class type that derives from <code>::k::Throwable</code> may be thrown or caught;
+throwing a non-Throwable type is a compile-time error (<code>0x01C0</code>).
+</p>
+<p>
+The check is best-effort and fails soft: it only runs when <code>::k::Throwable</code> is
+resolvable from the current file (the standard library is present/imported, or it is declared
+locally). Exception types that cannot be resolved, and <code>throw</code> operands whose type
+cannot be inferred, are left untouched.
+</p>
+</body>
+</html>
+

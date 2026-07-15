@@ -19,7 +19,7 @@ public interface KlangUnionDecl extends KlangNamedElement {
   @NotNull
   List<KlangUnionMemberDecl> getUnionMemberDeclList();
 
-  @NotNull
+  @Nullable
   PsiElement getIdentifier();
 
 }

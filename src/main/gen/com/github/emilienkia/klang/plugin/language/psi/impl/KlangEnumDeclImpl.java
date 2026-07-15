@@ -45,9 +45,9 @@ public class KlangEnumDeclImpl extends KlangNamedDeclMixin implements KlangEnumD
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getIdentifier() {
-    return findNotNullChildByType(IDENTIFIER);
+    return findChildByType(IDENTIFIER);
   }
 
 }

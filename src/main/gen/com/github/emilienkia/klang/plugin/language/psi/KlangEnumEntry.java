@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface KlangEnumEntry extends PsiElement {
+public interface KlangEnumEntry extends KlangNamedElement {
 
   @Nullable
   KlangBraceInitList getBraceInitList();

@@ -23,6 +23,11 @@ public class KlangSyntaxHighlighter implements SyntaxHighlighter {
             createTextAttributesKey("KLANG_LINE_COMMENT",  DefaultLanguageHighlighterColors.LINE_COMMENT);
     public static final TextAttributesKey BLOCK_COMMENT =
             createTextAttributesKey("KLANG_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
+    /** Documentation comments (Javadoc / Doxygen style): {@code ///} and {@code /** … *}{@code /}. */
+    public static final TextAttributesKey LINE_DOC_COMMENT =
+            createTextAttributesKey("KLANG_LINE_DOC_COMMENT",  DefaultLanguageHighlighterColors.DOC_COMMENT);
+    public static final TextAttributesKey BLOCK_DOC_COMMENT =
+            createTextAttributesKey("KLANG_BLOCK_DOC_COMMENT", DefaultLanguageHighlighterColors.DOC_COMMENT);
 
     // ── Keywords ──────────────────────────────────────────────────────────────
     /** Primitive / built-in types: bool byte char short int long float double unsigned */
@@ -45,7 +50,7 @@ public class KlangSyntaxHighlighter implements SyntaxHighlighter {
     public static final TextAttributesKey IDENTIFIER =
             createTextAttributesKey("KLANG_IDENTIFIER", DefaultLanguageHighlighterColors.IDENTIFIER);
 
-    // ── Semantic identifier roles (applied by annotator) ──────────────────────
+    // ── Semantic identifier roles — declaration sites (applied by KlangAnnotator) ──
     /** Identifier in a variable declaration: x : int = 0; */
     public static final TextAttributesKey IDENTIFIER_VAR_DECL =
             createTextAttributesKey("KLANG_IDENTIFIER_VAR_DECL",   DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
@@ -64,6 +69,32 @@ public class KlangSyntaxHighlighter implements SyntaxHighlighter {
     /** Operator symbol in an operator function declaration: operator == → "==" */
     public static final TextAttributesKey IDENTIFIER_OPERATOR_DECL =
             createTextAttributesKey("KLANG_IDENTIFIER_OPERATOR_DECL", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+
+    // ── Semantic identifier roles — usage/reference sites (applied by KlangSemanticHighlighter) ──
+    /** Reference to a type (struct / class / interface / annotation / enum / union). */
+    public static final TextAttributesKey IDENTIFIER_TYPE_REF =
+            createTextAttributesKey("KLANG_IDENTIFIER_TYPE_REF",          DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+    /** Identifier used as the callee of a call expression: f(…) or obj.f(…). */
+    public static final TextAttributesKey IDENTIFIER_FUN_CALL =
+            createTextAttributesKey("KLANG_IDENTIFIER_FUN_CALL",          DefaultLanguageHighlighterColors.FUNCTION_CALL);
+    /** Reference to a function that is not in a call position. */
+    public static final TextAttributesKey IDENTIFIER_FUN_REF =
+            createTextAttributesKey("KLANG_IDENTIFIER_FUN_REF",           DefaultLanguageHighlighterColors.FUNCTION_CALL);
+    /** Reference to a local variable or field. */
+    public static final TextAttributesKey IDENTIFIER_VAR_REF =
+            createTextAttributesKey("KLANG_IDENTIFIER_VAR_REF",           DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
+    /** Reference to a function parameter or catch-parameter. */
+    public static final TextAttributesKey IDENTIFIER_PARAM_REF =
+            createTextAttributesKey("KLANG_IDENTIFIER_PARAM_REF",         DefaultLanguageHighlighterColors.PARAMETER);
+    /** Reference to a namespace or module. */
+    public static final TextAttributesKey IDENTIFIER_NAMESPACE_REF =
+            createTextAttributesKey("KLANG_IDENTIFIER_NAMESPACE_REF",     DefaultLanguageHighlighterColors.IDENTIFIER);
+    /** Reference to an enum entry or union member constant. */
+    public static final TextAttributesKey IDENTIFIER_ENUM_ENTRY_REF =
+            createTextAttributesKey("KLANG_IDENTIFIER_ENUM_ENTRY_REF",    DefaultLanguageHighlighterColors.CONSTANT);
+    /** Reference to a template / generic type parameter: T in template&lt;typename T&gt;. */
+    public static final TextAttributesKey IDENTIFIER_TEMPLATE_PARAM_REF =
+            createTextAttributesKey("KLANG_IDENTIFIER_TEMPLATE_PARAM_REF", DefaultLanguageHighlighterColors.IDENTIFIER);
 
     // ── Literals ──────────────────────────────────────────────────────────────
     public static final TextAttributesKey LIT_NUMBER =
@@ -140,6 +171,8 @@ public class KlangSyntaxHighlighter implements SyntaxHighlighter {
         // comments
         map(LINE_COMMENT,       KlangTypes.LINE_COMMENT);
         map(BLOCK_COMMENT,      KlangTypes.BLOCK_COMMENT);
+        map(LINE_DOC_COMMENT,   KlangTypes.LINE_DOC_COMMENT);
+        map(BLOCK_DOC_COMMENT,  KlangTypes.BLOCK_DOC_COMMENT);
 
         // keywords — types
         mapSet(KEYWORD_TYPE,     KlangTokenSets.KEYWORDS_TYPE);

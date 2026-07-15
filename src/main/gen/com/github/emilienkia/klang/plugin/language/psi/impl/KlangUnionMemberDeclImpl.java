@@ -8,10 +8,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.github.emilienkia.klang.plugin.language.psi.KlangTypes.*;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.github.emilienkia.klang.plugin.language.psi.*;
 
-public class KlangUnionMemberDeclImpl extends ASTWrapperPsiElement implements KlangUnionMemberDecl {
+public class KlangUnionMemberDeclImpl extends KlangNamedDeclMixin implements KlangUnionMemberDecl {
 
   public KlangUnionMemberDeclImpl(@NotNull ASTNode node) {
     super(node);

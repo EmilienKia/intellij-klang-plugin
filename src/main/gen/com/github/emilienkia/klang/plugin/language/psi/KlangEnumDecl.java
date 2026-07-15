@@ -16,7 +16,7 @@ public interface KlangEnumDecl extends KlangNamedElement {
   @Nullable
   KlangTypeSpec getTypeSpec();
 
-  @NotNull
+  @Nullable
   PsiElement getIdentifier();
 
 }

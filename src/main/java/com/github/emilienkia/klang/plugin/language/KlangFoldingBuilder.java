@@ -57,12 +57,13 @@ public class KlangFoldingBuilder implements FoldingBuilder {
             }
         }
 
-        // Also fold block comments
-        if (type == KlangTypes.BLOCK_COMMENT) {
+        // Also fold block comments (ordinary and documentation)
+        if (type == KlangTypes.BLOCK_COMMENT || type == KlangTypes.BLOCK_DOC_COMMENT) {
             TextRange range = node.getTextRange();
             if (document.getLineNumber(range.getStartOffset()) <
                 document.getLineNumber(range.getEndOffset() - 1)) {
-                descriptors.add(new FoldingDescriptor(node, range, null, "/*...*/"));
+                String placeholder = type == KlangTypes.BLOCK_DOC_COMMENT ? "/**...*/" : "/*...*/";
+                descriptors.add(new FoldingDescriptor(node, range, null, placeholder));
             }
         }
 
@@ -85,6 +86,9 @@ public class KlangFoldingBuilder implements FoldingBuilder {
             if (head == null) head = node.findChildByType(KlangTypes.DESTRUCTOR_HEAD);
             if (head == null) head = node.findChildByType(KlangTypes.OPERATOR_FUNCTION_HEAD);
             if (head != null) return head.getText() + "(…) {…}";
+            // Cast / conversion operator 'operator ()' has no parameter list.
+            ASTNode castHead = node.findChildByType(KlangTypes.CAST_OPERATOR_FUNCTION_HEAD);
+            if (castHead != null) return castHead.getText() + " {…}";
         }
 
         if (type == KlangTypes.AGGREGATE_DECL) {

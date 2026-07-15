@@ -385,18 +385,37 @@ structure in the source code, not the call stack at runtime.
 ### 5.8 External module fallback
 
 When the module root is reached and the name is still unresolved, the resolver tries
-to find the declaration in **imported modules** (loaded through `import` statements):
+to find the declaration in **other modules**. Two rules govern visibility across modules:
+
+- **Modules are airtight.** A symbol declared in another module is invisible unless that
+  module is brought in with an explicit `import M;`.
+- **`import` grants _qualified access only_.** Importing module `M` does **not** inject `M`'s
+  symbols into the current scope unqualified. The name must be written with the module-name
+  prefix (`M::sym` or `::M::sym` — the module name _is_ the root namespace of its symbols).
+  Unqualified access requires a [`using` directive](#9-using-directives-in-detail) (§9).
+- **The standard library `k` is auto-imported.** Names targeting the `k` namespace
+  (`k::math::abs`, `::k::Throwable`, …) resolve against the project's `k`-rooted modules even
+  without an explicit `import`. Every other module still requires one.
 
 ```
 EXTERNAL_LOOKUP(name):
-  1. Search all imported module symbols for a function matching name
-  2. Search all imported module symbols for a variable matching name
-  3. If name has >= 2 components:
-       agg_name  = name.without_last_component
-       func_name = name.last_component
-       Search imported aggregates for agg_name,
-         then search that aggregate's functions for func_name
+  candidate_modules = imported_modules(current_file)
+                    + k_rooted_modules(project)   // 'k' is auto-imported
+
+  for each module M in candidate_modules:
+    // qualified access only: the name must start with M's (possibly compound) name
+    rest = strip_module_prefix(name, M.name)      // e.g. 'k::math::abs' - 'k::math' = 'abs'
+    if rest == name: continue                     // not prefixed by M → no access
+    result = DOWN_LOOKUP(rest, M.root)
+    if found: return result
+
+  return "not found"                              // unqualified names resolve only via 'using'
 ```
+
+> **Imports are not transitive.** If module `A` imports `B` and uses a symbol of `B` whose
+> signature mentions a symbol of `C`, then `A` must import `C` as well — but only if `A`
+> actually _uses_ that transitive symbol. An unused transitive dependency needs no import.
+
 
 ---
 
@@ -1278,13 +1297,12 @@ name is simple (no ":")
   │   ├─ functions in scope
   │   ├─ if aggregate: inherited members (BFS over bases)
   │   └─ if block: enclosing function parameters
-  ├─ USING_LOOKUP(name, current_scope)
+  ├─ USING_LOOKUP(name, current_scope)   ← only path to an unqualified imported symbol
   └─ recurse with parent_scope
       └─ at module root with no further parent:
           └─ EXTERNAL_LOOKUP(name)
-              ├─ imported functions
-              ├─ imported variables
-              └─ imported aggregate methods (peel as agg_name::func_name)
+              └─ qualified module-prefixed names only (M::sym / ::M::sym);
+                 'k::…' auto-imported. A bare simple name resolves nothing here.
 
 After standard resolution yields nothing:
   name.size() >= 2 and name.back() == "annotation"

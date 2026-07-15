@@ -16,13 +16,16 @@ public interface KlangAggregateDecl extends KlangNamedElement {
   @NotNull
   List<KlangDeclaration> getDeclarationList();
 
+  @Nullable
+  KlangGenericDeclaration getGenericDeclaration();
+
   @NotNull
   List<KlangSpecifier> getSpecifierList();
 
   @Nullable
   KlangTemplateDeclaration getTemplateDeclaration();
 
-  @NotNull
+  @Nullable
   PsiElement getIdentifier();
 
 }

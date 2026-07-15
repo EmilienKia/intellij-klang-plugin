@@ -55,12 +55,16 @@ public class KlangVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitCastOperatorFunctionHead(@NotNull KlangCastOperatorFunctionHead o) {
+    visitPsiElement(o);
+  }
+
   public void visitCatchClause(@NotNull KlangCatchClause o) {
     visitPsiElement(o);
   }
 
   public void visitCatchParameterDecl(@NotNull KlangCatchParameterDecl o) {
-    visitPsiElement(o);
+    visitNamedElement(o);
   }
 
   public void visitCondVarInitialiser(@NotNull KlangCondVarInitialiser o) {
@@ -92,7 +96,7 @@ public class KlangVisitor extends PsiElementVisitor {
   }
 
   public void visitEnumEntry(@NotNull KlangEnumEntry o) {
-    visitPsiElement(o);
+    visitNamedElement(o);
   }
 
   public void visitEqualityExpr(@NotNull KlangEqualityExpr o) {
@@ -168,7 +172,7 @@ public class KlangVisitor extends PsiElementVisitor {
   }
 
   public void visitIfCondVarDecl(@NotNull KlangIfCondVarDecl o) {
-    visitPsiElement(o);
+    visitNamedElement(o);
   }
 
   public void visitIfCondVarDeclList(@NotNull KlangIfCondVarDeclList o) {
@@ -228,11 +232,11 @@ public class KlangVisitor extends PsiElementVisitor {
   }
 
   public void visitNamedReturnVar(@NotNull KlangNamedReturnVar o) {
-    visitPsiElement(o);
+    visitNamedElement(o);
   }
 
   public void visitNamespaceDecl(@NotNull KlangNamespaceDecl o) {
-    visitPsiElement(o);
+    visitNamedElement(o);
   }
 
   public void visitNewExpr(@NotNull KlangNewExpr o) {
@@ -252,7 +256,7 @@ public class KlangVisitor extends PsiElementVisitor {
   }
 
   public void visitParameterSpec(@NotNull KlangParameterSpec o) {
-    visitPsiElement(o);
+    visitNamedElement(o);
   }
 
   public void visitPmExpr(@NotNull KlangPmExpr o) {
@@ -320,7 +324,7 @@ public class KlangVisitor extends PsiElementVisitor {
   }
 
   public void visitTemplateParameter(@NotNull KlangTemplateParameter o) {
-    visitPsiElement(o);
+    visitNamedElement(o);
   }
 
   public void visitTemplateParameterKind(@NotNull KlangTemplateParameterKind o) {
@@ -376,7 +380,7 @@ public class KlangVisitor extends PsiElementVisitor {
   }
 
   public void visitUnionMemberDecl(@NotNull KlangUnionMemberDecl o) {
-    visitPsiElement(o);
+    visitNamedElement(o);
   }
 
   public void visitUsingDecl(@NotNull KlangUsingDecl o) {

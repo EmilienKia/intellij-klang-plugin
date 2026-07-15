@@ -42,12 +42,55 @@
     implements("variableDecl")   = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
     mixin("variableDecl")        = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
 
+    // Phase 0 — promote every remaining named entity to a navigation target.
+    // The declared name is the first direct IDENTIFIER child, so the generic
+    // KlangNamedDeclMixin works for all of them (namespaceDecl and parameterSpec
+    // tolerate the anonymous form by returning a null name).
+
+    implements("namespaceDecl")      = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("namespaceDecl")           = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    implements("parameterSpec")      = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("parameterSpec")           = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    implements("namedReturnVar")     = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("namedReturnVar")          = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    implements("enumEntry")          = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("enumEntry")               = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    implements("unionMemberDecl")    = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("unionMemberDecl")         = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    implements("ifCondVarDecl")      = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("ifCondVarDecl")           = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    implements("catchParameterDecl") = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("catchParameterDecl")      = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    implements("templateParameter")  = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("templateParameter")       = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
     mixin("identifierExpr")      = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangIdentifierExprMixin"
+
+    // Phase 1 — qualifiedIdentifier carries a reference (via getReference()) when it
+    // appears in a type/directive position (typeSpec, baseSpec, using/friend, @annotation,
+    // staticDep, redirect body). Expression-context identifiers are handled by identifierExpr.
+    mixin("qualifiedIdentifier") = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangQualifiedIdentifierMixin"
+
+    // Phase 2 — constructor member/base initializers and designated initializers carry a
+    // reference to the field/base they target (resolved against the owning / initialised type).
+    mixin("memberInit")          = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangMemberInitMixin"
+    mixin("designatedMemberName")= "com.github.emilienkia.klang.plugin.language.psi.impl.KlangDesignatedMemberNameMixin"
 
     // ── Tokens ────────────────────────────────────────────────────────────
 
     // Comments
     tokens = [
+        // Documentation comments (Javadoc / Doxygen style) — listed before the plain
+        // comment tokens so live-preview prefers them. Real lexing is done by JFlex.
+        LINE_DOC_COMMENT    = "regexp:///[^\r\n]*"
+        BLOCK_DOC_COMMENT   = "regexp:/\*\*([^*]|\*+[^/*])*\*+/"
         LINE_COMMENT        = "regexp://[^\r\n]*"
         BLOCK_COMMENT       = "regexp:/\*([^*]|\*+[^/*])*\*+/"
 
@@ -221,6 +264,18 @@ templateArg ::= typeSpec | conditionalExpr
 
 // ── Declarations ─────────────────────────────────────────────────────────────
 
+// NOTE — Tolerated stray ';' (empty declaration). DO NOT REMOVE on grammar updates.
+// ---------------------------------------------------------------------------------
+// The trailing "| ';'" alternative is an INTENTIONAL extension that is NOT in the
+// strict EBNF declaration list. A lone ';' standing where a declaration is expected
+// (between two declarations or after the last one) is an "empty declaration": the K
+// compiler tolerates it, so the plugin must too — in EVERY declaration context (unit,
+// namespace, aggregate, …, since they all expand 'declaration*'). It is parsed here
+// (no PsiErrorElement) and reported as a non-fatal warning by KlangAnnotator, which
+// detects a DECLARATION node whose only child is the ';' token. This is also why block
+// declarations (struct/class/interface/annotation/union/enum) no longer carry a
+// trailing ';': the leftover ';' is simply absorbed as an empty declaration.
+// Keep this alternative LAST so it never shadows a real declaration.
 declaration ::= visibilityDecl
               | namespaceDecl
               | usingDecl
@@ -230,34 +285,59 @@ declaration ::= visibilityDecl
               | unionDecl
               | functionDecl
               | variableDecl
-    { name = "declaration" }
+              | ';'   // empty declaration — see the "DO NOT REMOVE" note above
+    { name = "declaration"
+      // Error recovery: if a declaration fails to parse (e.g. a missing ';'),
+      // skip tokens until the start of the next declaration instead of letting the
+      // failure cascade and discard the rest of the file. Keeps sibling declarations
+      // (and therefore their references/resolution) intact.
+      recoverWhile = declarationRecover }
+
+// True while the current token CANNOT start another declaration (nor close the
+// enclosing namespace/aggregate body). Resynchronises declaration* on the next decl.
+private declarationRecover ::= !declarationFirst
+
+private declarationFirst ::= '}'
+    | 'public' | 'protected' | 'private'
+    | 'static' | 'const' | 'abstract' | 'final' | 'override'
+    | 'namespace' | 'using' | 'friend'
+    | 'struct' | 'class' | 'interface' | 'annotation'
+    | 'enum' | 'union'
+    | 'template' | 'generic' | 'operator'
+    | '@' | '~' | ';' | IDENTIFIER
+    { name = "declaration start" }
+
 
 visibilityDecl ::= ('public' | 'protected' | 'private') ':'
     { name = "visibility label (public/protected/private:)" }
 
 namespaceDecl ::= 'namespace' IDENTIFIER? '{' declaration* '}'
-    { name = "namespace declaration" }
+    { name = "namespace declaration"
+      pin = 1 }   // commit once 'namespace' is seen so a later error keeps the node
 
 usingDecl ::= 'using' usingFilter? (IDENTIFIER '=')? qualifiedIdentifier ';'
-    { name = "using declaration" }
+    { name = "using declaration"
+      pin = 1 }
 
 usingFilter ::= 'namespace' | 'struct' | 'interface' | 'class'
     { name = "using filter (namespace/struct/interface/class)" }
 
 friendDecl ::= 'friend' friendFilter? qualifiedIdentifier ';'
-    { name = "friend declaration" }
+    { name = "friend declaration"
+      pin = 1 }
 
 friendFilter ::= 'struct' | 'interface' | 'class'
     { name = "friend filter (struct/interface/class)" }
 
 // ── Aggregates ───────────────────────────────────────────────────────────────
 
-aggregateDecl ::= annotationDef* templateDeclaration? specifier*
+aggregateDecl ::= annotationDef* (templateDeclaration | genericDeclaration)? specifier*
                   ('struct' | 'class' | 'interface' | 'annotation')
                   IDENTIFIER
                   (':' baseClause)?
                   '{' declaration* '}'
-    { name = "struct/class/interface/annotation declaration" }
+    { name = "struct/class/interface/annotation declaration"
+      pin = 4 }   // commit once the struct/class/interface/annotation keyword is matched
 
 baseClause ::= baseSpec (',' baseSpec)*
     { name = "base class list" }
@@ -267,9 +347,15 @@ baseSpec ::= ('public' | 'protected' | 'private')? qualifiedIdentifier
 
 // ── Enumerations ─────────────────────────────────────────────────────────────
 
+// An enum is a block declaration: like struct/class/interface/annotation/union it has
+// NO trailing ';' after the closing '}'. Any leftover ';' is absorbed by the enclosing
+// declaration list as an empty declaration (tolerated, reported as a warning). Do not
+// re-add a trailing ';' here when syncing the grammar.
 enumDecl ::= specifier* 'enum' IDENTIFIER (':' typeSpec)?
-             '{' enumEntry* '}' ';'
-    { name = "enum declaration" }
+             '{' enumEntry* '}'
+    { name = "enum declaration"
+      pin = 2 }   // commit once 'enum' is seen — a missing trailing ';' no longer
+                  // discards the rest of the file (error recovery resyncs on the next decl)
 
 enumEntry ::= IDENTIFIER ('=' (LIT_INTEGER | IDENTIFIER) | braceInitList | '(' expressionList? ')')? 'default'? ';'
     { name = "enum entry" }
@@ -280,25 +366,43 @@ unionDecl ::= annotationDef* specifier*
               'union' IDENTIFIER
               (':' qualifiedIdentifier)?
               '{' unionMemberDecl* '}'
-    { name = "union declaration" }
+    { name = "union declaration"
+      pin = 3 }   // commit once 'union' is matched
 
 unionMemberDecl ::= 'const'? IDENTIFIER ':' typeSpec ';'
     { name = "union member declaration" }
 
 // ── Annotations ──────────────────────────────────────────────────────────────
 
-annotationDef ::= '@' qualifiedIdentifier
-                | '@' qualifiedIdentifier '(' expressionList? ')'
-                | '@' qualifiedIdentifier braceInitList
+// Left-factored on purpose: the EBNF lists three alternatives that all share the
+// '@' qualifiedIdentifier prefix. GrammarKit emits a PEG ordered choice (no
+// backtracking over a matched prefix), so listing the bare '@' qualifiedIdentifier
+// first would win for '@Foo(...)' and '@Foo{...}' too, leaving the '(' / '{' part
+// dangling and breaking the enclosing declaration. Factoring the optional argument
+// group keeps it PEG-safe while still accepting all three EBNF forms.
+annotationDef ::= '@' qualifiedIdentifier ('(' expressionList? ')' | braceInitList)?
     { name = "annotation" }
 
 // ── Functions ────────────────────────────────────────────────────────────────
 
+// Two shapes share the common tail 'throwsClause? functionBody':
+//   1. Standard function / regular operator / subscript operator / destructor:
+//      a head, then a parenthesised parameter list, an optional named return var,
+//      and an optional ':' return-type-or-member-init-list.
+//   2. Cast / conversion operator (castOperatorFunctionHead = 'operator' '(' ')'):
+//      the '()' IS the operator symbol, so NO parameter list follows; only an
+//      optional ':' typeSpec (the conversion target type).
+// The tail is left-factored so functionBody/throwsClause keep a single PSI accessor.
+// PEG note: branch 1's head alternation rejects 'operator (' (operatorFunctionHead
+// wants a symbol or '[') and rolls back, so 'operator ()' falls through to branch 2.
 functionDecl ::= annotationDef* (templateDeclaration | genericDeclaration)? specifier*
-                 (functionHead | operatorFunctionHead | destructorHead)
-                 '(' parameterList? ')'
-                 namedReturnVar?
-                 (':' returnTypeOrMemberInitList)?
+                 ( (functionHead | operatorFunctionHead | destructorHead)
+                   '(' parameterList? ')'
+                   namedReturnVar?
+                   (':' returnTypeOrMemberInitList)?
+                 | castOperatorFunctionHead
+                   (':' typeSpec)?
+                 )
                  throwsClause?
                  functionBody
     { name = "function declaration" }
@@ -316,8 +420,14 @@ destructorHead ::= '~' IDENTIFIER
     { name = "destructor name (~Name)" }
 
 operatorFunctionHead ::= 'operator' operatorSymbol
-                       | 'operator' '(' ')'
+                       | 'operator' '[' ']'
     { name = "operator function name" }
+
+// Cast / conversion operator: 'operator ()'. Kept separate from operatorFunctionHead
+// because it has no parameter list (the '()' is the operator symbol itself) — see
+// functionDecl's second branch.
+castOperatorFunctionHead ::= 'operator' '(' ')'
+    { name = "cast operator function name (operator ())" }
 
 operatorSymbol ::= '+'  | '-'   | '*'   | '/'   | '%'
                  | '&'  | '|'   | '^'   | '~'
@@ -392,7 +502,7 @@ initialiser ::= '=' conditionalExpr
 // ── Specifiers ───────────────────────────────────────────────────────────────
 
 specifier ::= 'public' | 'protected' | 'private'
-            | 'static' | 'const'     | 'abstract' | 'final' | 'override'
+            | 'static' | 'const'     | 'abstract' | 'final' | 'override' | 'default'
     { name = "specifier (public/static/const/…)" }
 
 // ── Type Specifiers ───────────────────────────────────────────────────────────

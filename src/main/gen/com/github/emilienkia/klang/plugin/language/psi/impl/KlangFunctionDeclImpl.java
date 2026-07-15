@@ -34,6 +34,12 @@ public class KlangFunctionDeclImpl extends KlangFunctionDeclMixin implements Kla
 
   @Override
   @Nullable
+  public KlangCastOperatorFunctionHead getCastOperatorFunctionHead() {
+    return findChildByClass(KlangCastOperatorFunctionHead.class);
+  }
+
+  @Override
+  @Nullable
   public KlangDestructorHead getDestructorHead() {
     return findChildByClass(KlangDestructorHead.class);
   }
@@ -96,6 +102,12 @@ public class KlangFunctionDeclImpl extends KlangFunctionDeclMixin implements Kla
   @Nullable
   public KlangThrowsClause getThrowsClause() {
     return findChildByClass(KlangThrowsClause.class);
+  }
+
+  @Override
+  @Nullable
+  public KlangTypeSpec getTypeSpec() {
+    return findChildByClass(KlangTypeSpec.class);
   }
 
 }

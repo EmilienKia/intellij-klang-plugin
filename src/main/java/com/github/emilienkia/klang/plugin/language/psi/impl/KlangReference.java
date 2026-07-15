@@ -38,6 +38,11 @@ public class KlangReference extends PsiReferenceBase.Poly<PsiElement>
         if (refText == null || refText.isBlank()) return ResolveResult.EMPTY_ARRAY;
 
         List<PsiElement> found = KlangResolveUtil.resolve(myElement, refText.trim());
+        // A type name used as the callee of a call (Name(args)) is a constructor call:
+        // reference the constructor, not the aggregate type (§ type/constructor split).
+        if (KlangResolveUtil.isExpressionConstructorCall(myElement)) {
+            found = KlangResolveUtil.preferConstructors(found);
+        }
         return found.stream()
                 .map(PsiElementResolveResult::new)
                 .toArray(ResolveResult[]::new);
@@ -70,14 +75,14 @@ public class KlangReference extends PsiReferenceBase.Poly<PsiElement>
 
     /**
      * Computes the range within the element that constitutes the reference.
-     * For a qualified identifier like {@code k::io::print} we highlight only
-     * the last segment {@code print} (relative to the element start).
+     * For a qualified identifier like {@code k::io::print} we highlight only the last
+     * segment {@code print}; for a templated name like {@code Box<Point>} we highlight only
+     * the outer identifier {@code Box} (ignoring {@code ::} inside the {@code <...>} arguments)
+     * so each inner type argument keeps its own dedicated, separately-navigable reference.
      */
     private static TextRange computeRange(PsiElement element) {
         String text = element.getText();
         if (text == null) return TextRange.EMPTY_RANGE;
-        int idx   = text.lastIndexOf("::");
-        int start = idx >= 0 ? idx + 2 : 0;
-        return new TextRange(start, text.length());
+        return KlangResolveUtil.lastSegmentRange(text);
     }
 }

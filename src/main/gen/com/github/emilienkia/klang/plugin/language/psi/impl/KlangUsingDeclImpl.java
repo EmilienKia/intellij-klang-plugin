@@ -28,9 +28,9 @@ public class KlangUsingDeclImpl extends ASTWrapperPsiElement implements KlangUsi
   }
 
   @Override
-  @NotNull
+  @Nullable
   public KlangQualifiedIdentifier getQualifiedIdentifier() {
-    return findNotNullChildByClass(KlangQualifiedIdentifier.class);
+    return findChildByClass(KlangQualifiedIdentifier.class);
   }
 
   @Override

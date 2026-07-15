@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface KlangUnionMemberDecl extends PsiElement {
+public interface KlangUnionMemberDecl extends KlangNamedElement {
 
   @NotNull
   KlangTypeSpec getTypeSpec();

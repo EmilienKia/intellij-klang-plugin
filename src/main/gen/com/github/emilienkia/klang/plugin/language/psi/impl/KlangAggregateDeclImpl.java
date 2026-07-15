@@ -45,6 +45,12 @@ public class KlangAggregateDeclImpl extends KlangNamedDeclMixin implements Klang
   }
 
   @Override
+  @Nullable
+  public KlangGenericDeclaration getGenericDeclaration() {
+    return findChildByClass(KlangGenericDeclaration.class);
+  }
+
+  @Override
   @NotNull
   public List<KlangSpecifier> getSpecifierList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, KlangSpecifier.class);
@@ -57,9 +63,9 @@ public class KlangAggregateDeclImpl extends KlangNamedDeclMixin implements Klang
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getIdentifier() {
-    return findNotNullChildByType(IDENTIFIER);
+    return findChildByType(IDENTIFIER);
   }
 
 }

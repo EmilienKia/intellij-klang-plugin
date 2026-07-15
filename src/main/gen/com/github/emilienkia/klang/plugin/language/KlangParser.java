@@ -79,26 +79,27 @@ public class KlangParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // annotationDef* templateDeclaration? specifier*
+  // annotationDef* (templateDeclaration | genericDeclaration)? specifier*
   //                   ('struct' | 'class' | 'interface' | 'annotation')
   //                   IDENTIFIER
   //                   (':' baseClause)?
   //                   '{' declaration* '}'
   public static boolean aggregateDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "aggregateDecl")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, AGGREGATE_DECL, "<struct/class/interface/annotation declaration>");
     r = aggregateDecl_0(b, l + 1);
     r = r && aggregateDecl_1(b, l + 1);
     r = r && aggregateDecl_2(b, l + 1);
     r = r && aggregateDecl_3(b, l + 1);
-    r = r && consumeToken(b, IDENTIFIER);
-    r = r && aggregateDecl_5(b, l + 1);
-    r = r && consumeToken(b, PUNC_LBRACE);
-    r = r && aggregateDecl_7(b, l + 1);
-    r = r && consumeToken(b, PUNC_RBRACE);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    p = r; // pin = 4
+    r = r && report_error_(b, consumeToken(b, IDENTIFIER));
+    r = p && report_error_(b, aggregateDecl_5(b, l + 1)) && r;
+    r = p && report_error_(b, consumeToken(b, PUNC_LBRACE)) && r;
+    r = p && report_error_(b, aggregateDecl_7(b, l + 1)) && r;
+    r = p && consumeToken(b, PUNC_RBRACE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // annotationDef*
@@ -112,11 +113,20 @@ public class KlangParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // templateDeclaration?
+  // (templateDeclaration | genericDeclaration)?
   private static boolean aggregateDecl_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "aggregateDecl_1")) return false;
-    templateDeclaration(b, l + 1);
+    aggregateDecl_1_0(b, l + 1);
     return true;
+  }
+
+  // templateDeclaration | genericDeclaration
+  private static boolean aggregateDecl_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "aggregateDecl_1_0")) return false;
+    boolean r;
+    r = templateDeclaration(b, l + 1);
+    if (!r) r = genericDeclaration(b, l + 1);
+    return r;
   }
 
   // specifier*
@@ -171,63 +181,54 @@ public class KlangParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '@' qualifiedIdentifier
-  //                 | '@' qualifiedIdentifier '(' expressionList? ')'
-  //                 | '@' qualifiedIdentifier braceInitList
+  // '@' qualifiedIdentifier ('(' expressionList? ')' | braceInitList)?
   public static boolean annotationDef(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "annotationDef")) return false;
     if (!nextTokenIs(b, "<annotation>", PUNC_AT)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, ANNOTATION_DEF, "<annotation>");
-    r = annotationDef_0(b, l + 1);
-    if (!r) r = annotationDef_1(b, l + 1);
-    if (!r) r = annotationDef_2(b, l + 1);
+    r = consumeToken(b, PUNC_AT);
+    r = r && qualifiedIdentifier(b, l + 1);
+    r = r && annotationDef_2(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // '@' qualifiedIdentifier
-  private static boolean annotationDef_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "annotationDef_0")) return false;
+  // ('(' expressionList? ')' | braceInitList)?
+  private static boolean annotationDef_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "annotationDef_2")) return false;
+    annotationDef_2_0(b, l + 1);
+    return true;
+  }
+
+  // '(' expressionList? ')' | braceInitList
+  private static boolean annotationDef_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "annotationDef_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, PUNC_AT);
-    r = r && qualifiedIdentifier(b, l + 1);
+    r = annotationDef_2_0_0(b, l + 1);
+    if (!r) r = braceInitList(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '@' qualifiedIdentifier '(' expressionList? ')'
-  private static boolean annotationDef_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "annotationDef_1")) return false;
+  // '(' expressionList? ')'
+  private static boolean annotationDef_2_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "annotationDef_2_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, PUNC_AT);
-    r = r && qualifiedIdentifier(b, l + 1);
-    r = r && consumeToken(b, PUNC_LPAREN);
-    r = r && annotationDef_1_3(b, l + 1);
+    r = consumeToken(b, PUNC_LPAREN);
+    r = r && annotationDef_2_0_0_1(b, l + 1);
     r = r && consumeToken(b, PUNC_RPAREN);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // expressionList?
-  private static boolean annotationDef_1_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "annotationDef_1_3")) return false;
+  private static boolean annotationDef_2_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "annotationDef_2_0_0_1")) return false;
     expressionList(b, l + 1);
     return true;
-  }
-
-  // '@' qualifiedIdentifier braceInitList
-  private static boolean annotationDef_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "annotationDef_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, PUNC_AT);
-    r = r && qualifiedIdentifier(b, l + 1);
-    r = r && braceInitList(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -529,6 +530,18 @@ public class KlangParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // 'operator' '(' ')'
+  public static boolean castOperatorFunctionHead(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "castOperatorFunctionHead")) return false;
+    if (!nextTokenIs(b, "<cast operator function name (operator ())>", KW_OPERATOR)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, CAST_OPERATOR_FUNCTION_HEAD, "<cast operator function name (operator ())>");
+    r = consumeTokens(b, 0, KW_OPERATOR, PUNC_LPAREN, PUNC_RPAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // 'catch' '(' catchParameterDecl ')' blockStatement
   public static boolean catchClause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "catchClause")) return false;
@@ -651,6 +664,7 @@ public class KlangParser implements PsiParser, LightPsiParser {
   //               | unionDecl
   //               | functionDecl
   //               | variableDecl
+  //               | ';'
   public static boolean declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "declaration")) return false;
     boolean r;
@@ -664,6 +678,61 @@ public class KlangParser implements PsiParser, LightPsiParser {
     if (!r) r = unionDecl(b, l + 1);
     if (!r) r = functionDecl(b, l + 1);
     if (!r) r = variableDecl(b, l + 1);
+    if (!r) r = consumeToken(b, PUNC_SEMICOLON);
+    exit_section_(b, l, m, r, false, KlangParser::declarationRecover);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '}'
+  //     | 'public' | 'protected' | 'private'
+  //     | 'static' | 'const' | 'abstract' | 'final' | 'override' | 'default'
+  //     | 'namespace' | 'using' | 'friend'
+  //     | 'struct' | 'class' | 'interface' | 'annotation'
+  //     | 'enum' | 'union'
+  //     | 'template' | 'generic' | 'operator'
+  //     | '@' | '~' | ';' | IDENTIFIER
+  static boolean declarationFirst(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "declarationFirst")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, null, "<declaration start>");
+    r = consumeToken(b, PUNC_RBRACE);
+    if (!r) r = consumeToken(b, KW_PUBLIC);
+    if (!r) r = consumeToken(b, KW_PROTECTED);
+    if (!r) r = consumeToken(b, KW_PRIVATE);
+    if (!r) r = consumeToken(b, KW_STATIC);
+    if (!r) r = consumeToken(b, KW_CONST);
+    if (!r) r = consumeToken(b, KW_ABSTRACT);
+    if (!r) r = consumeToken(b, KW_FINAL);
+    if (!r) r = consumeToken(b, KW_OVERRIDE);
+    if (!r) r = consumeToken(b, KW_DEFAULT);
+    if (!r) r = consumeToken(b, KW_NAMESPACE);
+    if (!r) r = consumeToken(b, KW_USING);
+    if (!r) r = consumeToken(b, KW_FRIEND);
+    if (!r) r = consumeToken(b, KW_STRUCT);
+    if (!r) r = consumeToken(b, KW_CLASS);
+    if (!r) r = consumeToken(b, KW_INTERFACE);
+    if (!r) r = consumeToken(b, KW_ANNOTATION);
+    if (!r) r = consumeToken(b, KW_ENUM);
+    if (!r) r = consumeToken(b, KW_UNION);
+    if (!r) r = consumeToken(b, KW_TEMPLATE);
+    if (!r) r = consumeToken(b, KW_GENERIC);
+    if (!r) r = consumeToken(b, KW_OPERATOR);
+    if (!r) r = consumeToken(b, PUNC_AT);
+    if (!r) r = consumeToken(b, OP_TILDE);
+    if (!r) r = consumeToken(b, PUNC_SEMICOLON);
+    if (!r) r = consumeToken(b, IDENTIFIER);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !declarationFirst
+  static boolean declarationRecover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "declarationRecover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !declarationFirst(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -779,19 +848,20 @@ public class KlangParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // specifier* 'enum' IDENTIFIER (':' typeSpec)?
-  //              '{' enumEntry* '}' ';'
+  //              '{' enumEntry* '}'
   public static boolean enumDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "enumDecl")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, ENUM_DECL, "<enum declaration>");
     r = enumDecl_0(b, l + 1);
-    r = r && consumeTokens(b, 0, KW_ENUM, IDENTIFIER);
-    r = r && enumDecl_3(b, l + 1);
-    r = r && consumeToken(b, PUNC_LBRACE);
-    r = r && enumDecl_5(b, l + 1);
-    r = r && consumeTokens(b, 0, PUNC_RBRACE, PUNC_SEMICOLON);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    r = r && consumeTokens(b, 1, KW_ENUM, IDENTIFIER);
+    p = r; // pin = 2
+    r = r && report_error_(b, enumDecl_3(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, PUNC_LBRACE)) && r;
+    r = p && report_error_(b, enumDecl_5(b, l + 1)) && r;
+    r = p && consumeToken(b, PUNC_RBRACE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // specifier*
@@ -1137,14 +1207,15 @@ public class KlangParser implements PsiParser, LightPsiParser {
   public static boolean friendDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "friendDecl")) return false;
     if (!nextTokenIs(b, "<friend declaration>", KW_FRIEND)) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, FRIEND_DECL, "<friend declaration>");
     r = consumeToken(b, KW_FRIEND);
-    r = r && friendDecl_1(b, l + 1);
-    r = r && qualifiedIdentifier(b, l + 1);
-    r = r && consumeToken(b, PUNC_SEMICOLON);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, friendDecl_1(b, l + 1));
+    r = p && report_error_(b, qualifiedIdentifier(b, l + 1)) && r;
+    r = p && consumeToken(b, PUNC_SEMICOLON) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // friendFilter?
@@ -1246,10 +1317,13 @@ public class KlangParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // annotationDef* (templateDeclaration | genericDeclaration)? specifier*
-  //                  (functionHead | operatorFunctionHead | destructorHead)
-  //                  '(' parameterList? ')'
-  //                  namedReturnVar?
-  //                  (':' returnTypeOrMemberInitList)?
+  //                  ( (functionHead | operatorFunctionHead | destructorHead)
+  //                    '(' parameterList? ')'
+  //                    namedReturnVar?
+  //                    (':' returnTypeOrMemberInitList)?
+  //                  | castOperatorFunctionHead
+  //                    (':' typeSpec)?
+  //                  )
   //                  throwsClause?
   //                  functionBody
   public static boolean functionDecl(PsiBuilder b, int l) {
@@ -1260,12 +1334,7 @@ public class KlangParser implements PsiParser, LightPsiParser {
     r = r && functionDecl_1(b, l + 1);
     r = r && functionDecl_2(b, l + 1);
     r = r && functionDecl_3(b, l + 1);
-    r = r && consumeToken(b, PUNC_LPAREN);
-    r = r && functionDecl_5(b, l + 1);
-    r = r && consumeToken(b, PUNC_RPAREN);
-    r = r && functionDecl_7(b, l + 1);
-    r = r && functionDecl_8(b, l + 1);
-    r = r && functionDecl_9(b, l + 1);
+    r = r && functionDecl_4(b, l + 1);
     r = r && functionBody(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -1309,9 +1378,43 @@ public class KlangParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // functionHead | operatorFunctionHead | destructorHead
+  // (functionHead | operatorFunctionHead | destructorHead)
+  //                    '(' parameterList? ')'
+  //                    namedReturnVar?
+  //                    (':' returnTypeOrMemberInitList)?
+  //                  | castOperatorFunctionHead
+  //                    (':' typeSpec)?
   private static boolean functionDecl_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "functionDecl_3")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = functionDecl_3_0(b, l + 1);
+    if (!r) r = functionDecl_3_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (functionHead | operatorFunctionHead | destructorHead)
+  //                    '(' parameterList? ')'
+  //                    namedReturnVar?
+  //                    (':' returnTypeOrMemberInitList)?
+  private static boolean functionDecl_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "functionDecl_3_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = functionDecl_3_0_0(b, l + 1);
+    r = r && consumeToken(b, PUNC_LPAREN);
+    r = r && functionDecl_3_0_2(b, l + 1);
+    r = r && consumeToken(b, PUNC_RPAREN);
+    r = r && functionDecl_3_0_4(b, l + 1);
+    r = r && functionDecl_3_0_5(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // functionHead | operatorFunctionHead | destructorHead
+  private static boolean functionDecl_3_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "functionDecl_3_0_0")) return false;
     boolean r;
     r = functionHead(b, l + 1);
     if (!r) r = operatorFunctionHead(b, l + 1);
@@ -1320,29 +1423,29 @@ public class KlangParser implements PsiParser, LightPsiParser {
   }
 
   // parameterList?
-  private static boolean functionDecl_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "functionDecl_5")) return false;
+  private static boolean functionDecl_3_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "functionDecl_3_0_2")) return false;
     parameterList(b, l + 1);
     return true;
   }
 
   // namedReturnVar?
-  private static boolean functionDecl_7(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "functionDecl_7")) return false;
+  private static boolean functionDecl_3_0_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "functionDecl_3_0_4")) return false;
     namedReturnVar(b, l + 1);
     return true;
   }
 
   // (':' returnTypeOrMemberInitList)?
-  private static boolean functionDecl_8(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "functionDecl_8")) return false;
-    functionDecl_8_0(b, l + 1);
+  private static boolean functionDecl_3_0_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "functionDecl_3_0_5")) return false;
+    functionDecl_3_0_5_0(b, l + 1);
     return true;
   }
 
   // ':' returnTypeOrMemberInitList
-  private static boolean functionDecl_8_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "functionDecl_8_0")) return false;
+  private static boolean functionDecl_3_0_5_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "functionDecl_3_0_5_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, OP_COLON);
@@ -1351,9 +1454,39 @@ public class KlangParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  // castOperatorFunctionHead
+  //                    (':' typeSpec)?
+  private static boolean functionDecl_3_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "functionDecl_3_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = castOperatorFunctionHead(b, l + 1);
+    r = r && functionDecl_3_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (':' typeSpec)?
+  private static boolean functionDecl_3_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "functionDecl_3_1_1")) return false;
+    functionDecl_3_1_1_0(b, l + 1);
+    return true;
+  }
+
+  // ':' typeSpec
+  private static boolean functionDecl_3_1_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "functionDecl_3_1_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, OP_COLON);
+    r = r && typeSpec(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // throwsClause?
-  private static boolean functionDecl_9(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "functionDecl_9")) return false;
+  private static boolean functionDecl_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "functionDecl_4")) return false;
     throwsClause(b, l + 1);
     return true;
   }
@@ -2116,15 +2249,16 @@ public class KlangParser implements PsiParser, LightPsiParser {
   public static boolean namespaceDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "namespaceDecl")) return false;
     if (!nextTokenIs(b, "<namespace declaration>", KW_NAMESPACE)) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, NAMESPACE_DECL, "<namespace declaration>");
     r = consumeToken(b, KW_NAMESPACE);
-    r = r && namespaceDecl_1(b, l + 1);
-    r = r && consumeToken(b, PUNC_LBRACE);
-    r = r && namespaceDecl_3(b, l + 1);
-    r = r && consumeToken(b, PUNC_RBRACE);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, namespaceDecl_1(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, PUNC_LBRACE)) && r;
+    r = p && report_error_(b, namespaceDecl_3(b, l + 1)) && r;
+    r = p && consumeToken(b, PUNC_RBRACE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // IDENTIFIER?
@@ -2250,14 +2384,14 @@ public class KlangParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // 'operator' operatorSymbol
-  //                        | 'operator' '(' ')'
+  //                        | 'operator' '[' ']'
   public static boolean operatorFunctionHead(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "operatorFunctionHead")) return false;
     if (!nextTokenIs(b, "<operator function name>", KW_OPERATOR)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, OPERATOR_FUNCTION_HEAD, "<operator function name>");
     r = operatorFunctionHead_0(b, l + 1);
-    if (!r) r = parseTokens(b, 0, KW_OPERATOR, PUNC_LPAREN, PUNC_RPAREN);
+    if (!r) r = parseTokens(b, 0, KW_OPERATOR, PUNC_LBRACKET, PUNC_RBRACKET);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -2860,7 +2994,7 @@ public class KlangParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // 'public' | 'protected' | 'private'
-  //             | 'static' | 'const'     | 'abstract' | 'final' | 'override'
+  //             | 'static' | 'const'     | 'abstract' | 'final' | 'override' | 'default'
   public static boolean specifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "specifier")) return false;
     boolean r;
@@ -2873,6 +3007,7 @@ public class KlangParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, KW_ABSTRACT);
     if (!r) r = consumeToken(b, KW_FINAL);
     if (!r) r = consumeToken(b, KW_OVERRIDE);
+    if (!r) r = consumeToken(b, KW_DEFAULT);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -3539,17 +3674,18 @@ public class KlangParser implements PsiParser, LightPsiParser {
   //               '{' unionMemberDecl* '}'
   public static boolean unionDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unionDecl")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, UNION_DECL, "<union declaration>");
     r = unionDecl_0(b, l + 1);
     r = r && unionDecl_1(b, l + 1);
-    r = r && consumeTokens(b, 0, KW_UNION, IDENTIFIER);
-    r = r && unionDecl_4(b, l + 1);
-    r = r && consumeToken(b, PUNC_LBRACE);
-    r = r && unionDecl_6(b, l + 1);
-    r = r && consumeToken(b, PUNC_RBRACE);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    r = r && consumeTokens(b, 1, KW_UNION, IDENTIFIER);
+    p = r; // pin = 3
+    r = r && report_error_(b, unionDecl_4(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, PUNC_LBRACE)) && r;
+    r = p && report_error_(b, unionDecl_6(b, l + 1)) && r;
+    r = p && consumeToken(b, PUNC_RBRACE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // annotationDef*
@@ -3672,15 +3808,16 @@ public class KlangParser implements PsiParser, LightPsiParser {
   public static boolean usingDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "usingDecl")) return false;
     if (!nextTokenIs(b, "<using declaration>", KW_USING)) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, USING_DECL, "<using declaration>");
     r = consumeToken(b, KW_USING);
-    r = r && usingDecl_1(b, l + 1);
-    r = r && usingDecl_2(b, l + 1);
-    r = r && qualifiedIdentifier(b, l + 1);
-    r = r && consumeToken(b, PUNC_SEMICOLON);
-    exit_section_(b, l, m, r, false, null);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, usingDecl_1(b, l + 1));
+    r = p && report_error_(b, usingDecl_2(b, l + 1)) && r;
+    r = p && report_error_(b, qualifiedIdentifier(b, l + 1)) && r;
+    r = p && consumeToken(b, PUNC_SEMICOLON) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // usingFilter?

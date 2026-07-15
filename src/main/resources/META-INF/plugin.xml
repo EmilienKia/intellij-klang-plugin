@@ -13,7 +13,9 @@
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
     <description><![CDATA[
-        PoC of plugin to support K-lang source files.
+        Editor support for the K programming language (<code>.k</code> files):
+        lexing, parsing, syntax &amp; semantic highlighting, code folding, brace matching,
+        breadcrumbs and name resolution (Go-to-Declaration, Find Usages, Rename).
         ]]></description>
 
     <!-- Product and plugin compatibility requirements.
@@ -25,7 +27,7 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <fileType
-                name="Simple File"
+                name="K-lang source file"
                 implementationClass="com.github.emilienkia.klang.plugin.language.KlangFileType"
                 fieldName="INSTANCE"
                 language="K-lang"
@@ -46,13 +48,35 @@
                 language="K-lang"
                 implementationClass="com.github.emilienkia.klang.plugin.language.KlangAnnotator"/>
 
+        <!-- Semantic highlighting: colours identifier usages by what they resolve to
+             (variable, parameter, function-call, type-name, namespace, enum-entry, template-param). -->
+        <lang.annotator
+                language="K-lang"
+                implementationClass="com.github.emilienkia.klang.plugin.language.KlangSemanticHighlighter"/>
+
+        <!-- Opt K-lang files into WolfTheProblemSolver: a file with at least one error gets a
+             red underlined name in the Project view and its editor tab (like Java). Required
+             because WolfTheProblemSolverImpl.isToBeHighlighted() only tracks a file when a
+             registered problemFileHighlightFilter matches it. -->
+        <problemFileHighlightFilter
+                implementation="com.github.emilienkia.klang.plugin.language.KlangProblemFileHighlightFilter"/>
+
         <lang.braceMatcher
                 language="K-lang"
                 implementationClass="com.github.emilienkia.klang.plugin.language.KlangBraceMatcher"/>
 
+        <lang.commenter
+                language="K-lang"
+                implementationClass="com.github.emilienkia.klang.plugin.language.KlangCommenter"/>
+
         <lang.foldingBuilder
                 language="K-lang"
                 implementationClass="com.github.emilienkia.klang.plugin.language.KlangFoldingBuilder"/>
+
+        <!-- File outline (Structure tool window Alt+7 / File Structure popup Ctrl+F12). -->
+        <lang.psiStructureViewFactory
+                language="K-lang"
+                implementationClass="com.github.emilienkia.klang.plugin.language.structure.KlangStructureViewFactory"/>
 
         <breadcrumbsInfoProvider
                 implementation="com.github.emilienkia.klang.plugin.language.KlangBreadcrumbsProvider"/>
@@ -61,6 +85,152 @@
                 language="K-lang"
                 implementation="com.github.emilienkia.klang.plugin.language.KlangReferenceContributor"/>
 
+        <!-- Go-to-Declaration on an operator usage (a == b) → its 'operator' overload. -->
+        <gotoDeclarationHandler
+                implementation="com.github.emilienkia.klang.plugin.language.KlangOperatorGotoDeclarationHandler"/>
+
+        <!-- B1: upward inheritance gutter markers (overrides/implements, go-to-super-type). -->
+        <codeInsight.lineMarkerProvider
+                language="K-lang"
+                implementationClass="com.github.emilienkia.klang.plugin.language.KlangInheritanceLineMarkerProvider"/>
+
+        <!-- Constructor and destructor gutter markers. -->
+        <codeInsight.lineMarkerProvider
+                language="K-lang"
+                implementationClass="com.github.emilienkia.klang.plugin.language.KlangConstructorDestructorLineMarkerProvider"/>
+
+        <!-- Reverse navigation: 'operator[]' declaration → its a[i] usages (gutter marker). -->
+        <codeInsight.lineMarkerProvider
+                language="K-lang"
+                implementationClass="com.github.emilienkia.klang.plugin.language.KlangOperatorUsageLineMarkerProvider"/>
+
+        <lang.findUsagesProvider
+                language="K-lang"
+                implementationClass="com.github.emilienkia.klang.plugin.language.KlangFindUsagesProvider"/>
+
+        <!-- Propagate method rename across override / implementation hierarchies. -->
+        <renamePsiElementProcessor
+                implementation="com.github.emilienkia.klang.plugin.language.refactoring.KlangRenamePsiElementProcessor"/>
+
+        <!-- Propagate constructor/destructor rename to the owning aggregate. -->
+        <renamePsiElementProcessor
+                implementation="com.github.emilienkia.klang.plugin.language.refactoring.KlangFunctionDeclRenamePsiElementProcessor"/>
+
+        <!-- Propagate aggregate (class/struct/interface) rename to constructors, destructors, and calls. -->
+        <renamePsiElementProcessor
+                implementation="com.github.emilienkia.klang.plugin.language.refactoring.KlangAggregateRenamePsiElementProcessor"/>
+
+        <!-- Multi-file indexing (M1): file → declared module name, backing KlangModuleModel. -->
+        <fileBasedIndex
+                implementation="com.github.emilienkia.klang.plugin.language.index.KlangModuleNameIndex"/>
+
+        <!-- Multi-file indexing (M4): base simple name → files, for project-wide inheritance. -->
+        <fileBasedIndex
+                implementation="com.github.emilienkia.klang.plugin.language.index.KlangBaseNameIndex"/>
+
+        <!-- Multi-file indexing (M5): importable symbol simple name → files, for the add-import fix. -->
+        <fileBasedIndex
+                implementation="com.github.emilienkia.klang.plugin.language.index.KlangSymbolNameIndex"/>
+
+        <elementDescriptionProvider
+                implementation="com.github.emilienkia.klang.plugin.language.KlangElementDescriptionProvider"/>
+
+        <!-- Phase 4: validate that throw/catch/throws exception types derive from ::k::Throwable. -->
+        <localInspection
+                language="K-lang"
+                shortName="KlangExceptionType"
+                displayName="Exception type is not Throwable-derived"
+                groupName="K-lang"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="com.github.emilienkia.klang.plugin.language.inspection.KlangExceptionTypeInspection"/>
+
+        <!-- Directory-aware module layout: mixed directory / ambiguous inherited module. -->
+        <localInspection
+                language="K-lang"
+                shortName="KlangModuleLayout"
+                displayName="Ambiguous module layout"
+                groupName="K-lang"
+                enabledByDefault="true"
+                level="ERROR"
+                implementationClass="com.github.emilienkia.klang.plugin.language.inspection.KlangModuleLayoutInspection"/>
+
+        <!-- Unresolved-reference diagnostic (§16 'Undefined symbol') + add-import quick fix. -->
+        <localInspection
+                language="K-lang"
+                shortName="KlangUnresolvedReference"
+                displayName="Unresolved reference"
+                groupName="K-lang"
+                enabledByDefault="true"
+                level="ERROR"
+                implementationClass="com.github.emilienkia.klang.plugin.language.inspection.KlangUnresolvedReferenceInspection"/>
+
+        <!-- Missing abstract-method implementation: a concrete class/struct that does not
+             implement every abstract method inherited (transitively, virtual-only) from its
+             base interfaces / abstract classes. Quick fixes: implement missing methods, or
+             mark the class abstract. -->
+        <localInspection
+                language="K-lang"
+                shortName="KlangMissingImplementation"
+                displayName="Class does not implement all inherited abstract methods"
+                groupName="K-lang"
+                enabledByDefault="true"
+                level="ERROR"
+                implementationClass="com.github.emilienkia.klang.plugin.language.inspection.KlangMissingImplementationInspection"/>
+
+        <!-- 'override' is a declared intent: flag it when nothing is actually being overridden. -->
+        <localInspection
+                language="K-lang"
+                shortName="KlangOverrideSpecifier"
+                displayName="'override' specifier does not override anything"
+                groupName="K-lang"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="com.github.emilienkia.klang.plugin.language.inspection.KlangOverrideSpecifierInspection"/>
+
+        <!-- Spellchecking in identifiers (camelCase/snake_case split), comments and string literals.
+             The strategy delegates comments to the platform's CommentTokenizer, splits identifiers
+             with IdentifierSplitter (useRename=true so fixes propagate), and checks string literal
+             content via PlainTextSplitter (escape sequences are naturally skipped). -->
+        <spellchecker.support
+                language="K-lang"
+                implementationClass="com.github.emilienkia.klang.plugin.language.KlangSpellcheckingStrategy"/>
+
+        <!-- Manipulators so PsiReferenceBase can rename/bind (incl. the in-place renamer). -->
+        <lang.elementManipulator
+                forClass="com.github.emilienkia.klang.plugin.language.psi.KlangIdentifierExpr"
+                implementationClass="com.github.emilienkia.klang.plugin.language.psi.impl.KlangIdentifierManipulator"/>
+        <lang.elementManipulator
+                forClass="com.github.emilienkia.klang.plugin.language.psi.KlangQualifiedIdentifier"
+                implementationClass="com.github.emilienkia.klang.plugin.language.psi.impl.KlangIdentifierManipulator"/>
+        <lang.elementManipulator
+                forClass="com.github.emilienkia.klang.plugin.language.psi.KlangMemberInit"
+                implementationClass="com.github.emilienkia.klang.plugin.language.psi.impl.KlangIdentifierManipulator"/>
+        <lang.elementManipulator
+                forClass="com.github.emilienkia.klang.plugin.language.psi.KlangDesignatedMemberName"
+                implementationClass="com.github.emilienkia.klang.plugin.language.psi.impl.KlangIdentifierManipulator"/>
+
     </extensions>
+
+    <actions>
+        <!-- Alt+Insert "Generate…" entry: pick inherited abstract/virtual methods to override. -->
+        <action id="Klang.OverrideImplementMembers"
+                class="com.github.emilienkia.klang.plugin.language.generate.KlangOverrideImplementMembersAction"
+                text="Override/Implement Members…"
+                description="Generate override stubs for inherited K-lang methods">
+            <add-to-group group-id="GenerateGroup" anchor="first"/>
+        </action>
+
+        <!-- Refactor | Change Signature… for K-lang functions/methods: rename + change
+             parameters/return type/specifiers, propagating to overrides (and, on request,
+             to overridden base methods). Reuses the platform's Change Signature shortcut. -->
+        <action id="Klang.ChangeSignature"
+                class="com.github.emilienkia.klang.plugin.language.refactoring.changesignature.KlangChangeSignatureAction"
+                text="Change Signature…"
+                description="Change a K-lang function/method's name, parameters, return type and specifiers, propagating to overrides">
+            <add-to-group group-id="RefactoringMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl F6"/>
+        </action>
+    </actions>
 
 </idea-plugin>

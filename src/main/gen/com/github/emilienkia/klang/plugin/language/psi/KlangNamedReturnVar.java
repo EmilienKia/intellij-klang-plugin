@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface KlangNamedReturnVar extends PsiElement {
+public interface KlangNamedReturnVar extends KlangNamedElement {
 
   @Nullable
   KlangNamedReturnInit getNamedReturnInit();

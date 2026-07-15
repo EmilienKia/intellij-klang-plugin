@@ -1,6 +1,8 @@
 package com.github.emilienkia.klang.plugin.language;
 
 import com.github.emilienkia.klang.plugin.language.psi.KlangAggregateDecl;
+import com.github.emilienkia.klang.plugin.language.psi.KlangCastOperatorFunctionHead;
+import com.github.emilienkia.klang.plugin.language.psi.KlangDeclaration;
 import com.github.emilienkia.klang.plugin.language.psi.KlangDestructorHead;
 import com.github.emilienkia.klang.plugin.language.psi.KlangFunctionHead;
 import com.github.emilienkia.klang.plugin.language.psi.KlangOperatorFunctionHead;
@@ -46,6 +48,8 @@ public class KlangAnnotator implements Annotator {
         TOKEN_LABELS.put("LIT_NULL",        "'null'");
         TOKEN_LABELS.put("LINE_COMMENT",    "line comment");
         TOKEN_LABELS.put("BLOCK_COMMENT",   "block comment");
+        TOKEN_LABELS.put("LINE_DOC_COMMENT", "line documentation comment");
+        TOKEN_LABELS.put("BLOCK_DOC_COMMENT", "block documentation comment");
         TOKEN_LABELS.put("PUNC_SEMICOLON",  "';'");
         TOKEN_LABELS.put("PUNC_COMMA",      "','");
         TOKEN_LABELS.put("PUNC_LPAREN",     "'('");
@@ -103,14 +107,34 @@ public class KlangAnnotator implements Annotator {
                     .textAttributes(KlangSyntaxHighlighter.IDENTIFIER_DESTRUCTOR_DECL)
                     .create();
         } else if (element instanceof KlangOperatorFunctionHead op) {
-            // operator == → color the symbol; operator() → color the whole head
+            // operator == → color the symbol; operator[] → color the whole head ('operator [ ]')
             PsiElement target = op.getOperatorSymbol() != null ? op.getOperatorSymbol() : op;
             holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                     .range(target)
                     .textAttributes(KlangSyntaxHighlighter.IDENTIFIER_OPERATOR_DECL)
                     .create();
+        } else if (element instanceof KlangCastOperatorFunctionHead cast) {
+            // Cast / conversion operator 'operator ()' — color the whole head.
+            holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                    .range(cast)
+                    .textAttributes(KlangSyntaxHighlighter.IDENTIFIER_OPERATOR_DECL)
+                    .create();
         } else if (element instanceof KlangTemplateDeclaration || element instanceof KlangTemplateArgList) {
             highlightTemplateBrackets(element, holder);
+        } else if (element instanceof KlangDeclaration decl) {
+            // Empty declaration: a stray ';' standing where a declaration is expected
+            // (between two declarations, or after the last one — including the leftover ';'
+            // after a block declaration's '}'). The 'declaration ::= … | ';'' alternative in
+            // klang.bnf parses it without error to match the K compiler's leniency; here we
+            // surface it as a non-fatal warning. Such a DECLARATION node has the ';' token as
+            // its only (first) child. See the matching note in klang.bnf — keep both in sync.
+            ASTNode first = decl.getNode().getFirstChildNode();
+            if (first != null && first.getElementType() == KlangTypes.PUNC_SEMICOLON) {
+                holder.newAnnotation(HighlightSeverity.WARNING,
+                                "Superfluous ';': empty declaration (tolerated by the K compiler)")
+                        .range(first.getTextRange())
+                        .create();
+            }
         }
     }
 

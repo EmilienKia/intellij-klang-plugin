@@ -8,10 +8,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.github.emilienkia.klang.plugin.language.psi.KlangTypes.*;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.github.emilienkia.klang.plugin.language.psi.*;
 
-public class KlangNamedReturnVarImpl extends ASTWrapperPsiElement implements KlangNamedReturnVar {
+public class KlangNamedReturnVarImpl extends KlangNamedDeclMixin implements KlangNamedReturnVar {
 
   public KlangNamedReturnVarImpl(@NotNull ASTNode node) {
     super(node);

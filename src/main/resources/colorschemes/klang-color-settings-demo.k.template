@@ -122,6 +122,9 @@ template<typename T>
     <varDecl>d</varDecl> : float = p.distance(q);
     <varDecl>m</varDecl> : int = max<int>(10, 20);
 
+    <varDecl>eq</varDecl> : bool = p == q;
+
+
     <varDecl>mask</varDecl> : int = 0xFF & ~0x0F;
     <varDecl>flag</varDecl> : bool = (mask >> 4) != 0 || false;
     <varDecl>label</varDecl> : const char* = flag ? "set" : "clear";

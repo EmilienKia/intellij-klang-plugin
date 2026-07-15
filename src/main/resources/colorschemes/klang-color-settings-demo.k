@@ -122,6 +122,9 @@ main() : int {
     d : float = p.distance(q);
     m : int = max<int>(10, 20);
 
+    eq : bool = p == q;
+
+
     mask : int = 0xFF & ~0x0F;
     flag : bool = (mask >> 4) != 0 || false;
     label : const char* = flag ? "set" : "clear";

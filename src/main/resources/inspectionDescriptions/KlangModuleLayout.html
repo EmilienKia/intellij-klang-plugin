@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports directory-level module-layout errors of the default per-directory module policy.
+<p>
+Within a directory, if at least one <code>.k</code> file declares no <code>module</code>, the
+other files must all declare the <em>same</em> module — otherwise the directory is ambiguous
+(<b>mixed directory</b>). If every file declares a module, the directory may host several modules.
+</p>
+<p>
+A directory that declares no module inherits the module of the nearest ancestor directory that
+declares exactly one. If that ancestor declares <em>several</em> modules, the inherited module is
+<b>ambiguous</b>.
+</p>
+<p>
+Resolution still degrades gracefully (a deterministic best-effort module is used); this inspection
+only surfaces the layout problem so it can be fixed by declaring a single, explicit
+<code>module</code>.
+</p>
+</body>
+</html>
+

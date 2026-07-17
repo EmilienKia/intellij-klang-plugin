@@ -90,7 +90,9 @@
         // Documentation comments (Javadoc / Doxygen style) — listed before the plain
         // comment tokens so live-preview prefers them. Real lexing is done by JFlex.
         LINE_DOC_COMMENT    = "regexp:///[^\r\n]*"
+        LINE_DOC_COMMENT_BWD = "regexp://![^\r\n]*"
         BLOCK_DOC_COMMENT   = "regexp:/\*\*([^*]|\*+[^/*])*\*+/"
+        BLOCK_DOC_COMMENT_BWD = "regexp:/\*!([^*]|\*+[^/*])*\*+/"
         LINE_COMMENT        = "regexp://[^\r\n]*"
         BLOCK_COMMENT       = "regexp:/\*([^*]|\*+[^/*])*\*+/"
 
@@ -128,6 +130,7 @@
         KW_WHILE            = "while"
         KW_FOR              = "for"
         KW_BREAK            = "break"
+        KW_CONTINUE         = "continue"
         KW_NEW              = "new"
         KW_DELETE           = "delete"
         KW_DEFAULT          = "default"
@@ -161,6 +164,7 @@
 
         // Multi-char operators / punctuators
         OP_ARROW_STAR       = "->*"
+        OP_SPACESHIP        = "<=>"
         OP_ARROW            = "->"
         OP_DOT_STAR         = ".*"
         OP_LSHIFT_ASSIGN    = "<<="
@@ -299,7 +303,7 @@ private declarationRecover ::= !declarationFirst
 
 private declarationFirst ::= '}'
     | 'public' | 'protected' | 'private'
-    | 'static' | 'const' | 'abstract' | 'final' | 'override'
+    | 'static' | 'const' | 'abstract' | 'final' | 'override' | 'default'
     | 'namespace' | 'using' | 'friend'
     | 'struct' | 'class' | 'interface' | 'annotation'
     | 'enum' | 'union'
@@ -322,7 +326,7 @@ usingDecl ::= 'using' usingFilter? (IDENTIFIER '=')? qualifiedIdentifier ';'
 usingFilter ::= 'namespace' | 'struct' | 'interface' | 'class'
     { name = "using filter (namespace/struct/interface/class)" }
 
-friendDecl ::= 'friend' friendFilter? qualifiedIdentifier ';'
+friendDecl ::= 'friend' friendFilter? qualifiedIdentifier templateArgList? ';'
     { name = "friend declaration"
       pin = 1 }
 
@@ -433,7 +437,7 @@ operatorSymbol ::= '+'  | '-'   | '*'   | '/'   | '%'
                  | '&'  | '|'   | '^'   | '~'
                  | '<<' | '>>'
                  | '&&' | '||'  | '!'
-                 | '==' | '!='  | '<'   | '>'   | '<=' | '>='
+                 | '==' | '!='  | '<'   | '>'   | '<=' | '>=' | '<=>'
                  | '='  | '+='  | '-='  | '*='  | '/=' | '%='
                  | '&=' | '|='  | '^='  | '<<=' | '>>='
                  | '++' '_'
@@ -540,6 +544,7 @@ typeSuffix ::= '[' LIT_INTEGER? ']'
 statement ::= blockStatement
             | returnStatement
             | breakStatement
+            | continueStatement
             | ifElseStatement
             | whileStatement
             | forStatement
@@ -558,6 +563,9 @@ returnStatement ::= 'return' expression? ';'
 
 breakStatement ::= 'break' ';'
     { name = "break statement" }
+
+continueStatement ::= 'continue' ';'
+    { name = "continue statement" }
 
 ifElseStatement ::= 'if' '(' expression ')' statement ('else' statement)?
                   | 'if' '(' ifCondVarDecl ')' statement ('else' statement)?
@@ -636,8 +644,11 @@ binAndExpr ::= equalityExpr ('&' equalityExpr)*
 equalityExpr ::= relationalExpr (('==' | '!=') relationalExpr)*
     { name = "equality expression" }
 
-relationalExpr ::= shiftingExpr (('<' | '>' | '<=' | '>=') shiftingExpr)*
+relationalExpr ::= spaceshipExpr (('<' | '>' | '<=' | '>=') spaceshipExpr)*
     { name = "relational expression" }
+
+spaceshipExpr ::= shiftingExpr ('<=>' shiftingExpr)*
+    { name = "three-way comparison expression" }
 
 shiftingExpr ::= additiveExpr (('<<' | '>>') additiveExpr)*
     { name = "shift expression" }

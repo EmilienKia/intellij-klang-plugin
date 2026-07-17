@@ -81,7 +81,9 @@ public class KlangCommenter implements CodeDocumentationAwareCommenter, Indented
 
     @Override
     public boolean isDocumentationComment(PsiComment element) {
-        return element != null && element.getTokenType() == KlangTypes.BLOCK_DOC_COMMENT;
+        if (element == null) return false;
+        IElementType t = element.getTokenType();
+        return t == KlangTypes.BLOCK_DOC_COMMENT || t == KlangTypes.BLOCK_DOC_COMMENT_BWD;
     }
 
     @Nullable

@@ -11,26 +11,20 @@ import static com.github.emilienkia.klang.plugin.language.psi.KlangTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.github.emilienkia.klang.plugin.language.psi.*;
 
-public class KlangRelationalExprImpl extends ASTWrapperPsiElement implements KlangRelationalExpr {
+public class KlangContinueStatementImpl extends ASTWrapperPsiElement implements KlangContinueStatement {
 
-  public KlangRelationalExprImpl(@NotNull ASTNode node) {
+  public KlangContinueStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull KlangVisitor visitor) {
-    visitor.visitRelationalExpr(this);
+    visitor.visitContinueStatement(this);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof KlangVisitor) accept((KlangVisitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public List<KlangSpaceshipExpr> getSpaceshipExprList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, KlangSpaceshipExpr.class);
   }
 
 }

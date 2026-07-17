@@ -25,6 +25,7 @@ public interface KlangTypes {
   IElementType CATCH_PARAMETER_DECL = new KlangElementType("CATCH_PARAMETER_DECL");
   IElementType CONDITIONAL_EXPR = new KlangElementType("CONDITIONAL_EXPR");
   IElementType COND_VAR_INITIALISER = new KlangElementType("COND_VAR_INITIALISER");
+  IElementType CONTINUE_STATEMENT = new KlangElementType("CONTINUE_STATEMENT");
   IElementType DECLARATION = new KlangElementType("DECLARATION");
   IElementType DESIGNATED_INIT_ELEMENT = new KlangElementType("DESIGNATED_INIT_ELEMENT");
   IElementType DESIGNATED_MEMBER_NAME = new KlangElementType("DESIGNATED_MEMBER_NAME");
@@ -80,6 +81,7 @@ public interface KlangTypes {
   IElementType RETURN_STATEMENT = new KlangElementType("RETURN_STATEMENT");
   IElementType RETURN_TYPE_OR_MEMBER_INIT_LIST = new KlangElementType("RETURN_TYPE_OR_MEMBER_INIT_LIST");
   IElementType SHIFTING_EXPR = new KlangElementType("SHIFTING_EXPR");
+  IElementType SPACESHIP_EXPR = new KlangElementType("SPACESHIP_EXPR");
   IElementType SPECIFIER = new KlangElementType("SPECIFIER");
   IElementType STATEMENT = new KlangElementType("STATEMENT");
   IElementType STATIC_DEP = new KlangElementType("STATIC_DEP");
@@ -110,6 +112,7 @@ public interface KlangTypes {
 
   IElementType BLOCK_COMMENT = new KlangTokenType("BLOCK_COMMENT");
   IElementType BLOCK_DOC_COMMENT = new KlangTokenType("BLOCK_DOC_COMMENT");
+  IElementType BLOCK_DOC_COMMENT_BWD = new KlangTokenType("BLOCK_DOC_COMMENT_BWD");
   IElementType IDENTIFIER = new KlangTokenType("IDENTIFIER");
   IElementType INITELEMENT_1_0 = new KlangTokenType("initElement_1_0");
   IElementType KW_ABSTRACT = new KlangTokenType("abstract");
@@ -121,6 +124,7 @@ public interface KlangTypes {
   IElementType KW_CHAR = new KlangTokenType("char");
   IElementType KW_CLASS = new KlangTokenType("class");
   IElementType KW_CONST = new KlangTokenType("const");
+  IElementType KW_CONTINUE = new KlangTokenType("continue");
   IElementType KW_DEFAULT = new KlangTokenType("default");
   IElementType KW_DELETE = new KlangTokenType("delete");
   IElementType KW_DOUBLE = new KlangTokenType("double");
@@ -161,6 +165,7 @@ public interface KlangTypes {
   IElementType KW_WHILE = new KlangTokenType("while");
   IElementType LINE_COMMENT = new KlangTokenType("LINE_COMMENT");
   IElementType LINE_DOC_COMMENT = new KlangTokenType("LINE_DOC_COMMENT");
+  IElementType LINE_DOC_COMMENT_BWD = new KlangTokenType("LINE_DOC_COMMENT_BWD");
   IElementType LIT_CHAR = new KlangTokenType("LIT_CHAR");
   IElementType LIT_FALSE = new KlangTokenType("false");
   IElementType LIT_FLOAT = new KlangTokenType("LIT_FLOAT");
@@ -205,6 +210,7 @@ public interface KlangTypes {
   IElementType OP_QUESTION = new KlangTokenType("?");
   IElementType OP_RSHIFT = new KlangTokenType(">>");
   IElementType OP_RSHIFT_ASSIGN = new KlangTokenType(">>=");
+  IElementType OP_SPACESHIP = new KlangTokenType("<=>");
   IElementType OP_STAR = new KlangTokenType("*");
   IElementType OP_STAR_ASSIGN = new KlangTokenType("*=");
   IElementType OP_TILDE = new KlangTokenType("~");
@@ -256,6 +262,9 @@ public interface KlangTypes {
       }
       else if (type == BREAK_STATEMENT) {
         return new KlangBreakStatementImpl(node);
+      }
+      else if (type == CONTINUE_STATEMENT) {
+        return new KlangContinueStatementImpl(node);
       }
       else if (type == CAST_EXPR) {
         return new KlangCastExprImpl(node);
@@ -439,6 +448,9 @@ public interface KlangTypes {
       }
       else if (type == SHIFTING_EXPR) {
         return new KlangShiftingExprImpl(node);
+      }
+      else if (type == SPACESHIP_EXPR) {
+        return new KlangSpaceshipExprImpl(node);
       }
       else if (type == SPECIFIER) {
         return new KlangSpecifierImpl(node);

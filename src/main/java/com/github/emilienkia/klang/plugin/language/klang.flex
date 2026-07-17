@@ -36,10 +36,14 @@ WHITE_SPACE             = [ \t\f\r\n]+
 // Documentation comments follow the Javadoc / Doxygen formalism. They are NOT part of
 // the K grammar (the compiler handles them specially) but are recognised here so the
 // editor can highlight them differently from ordinary comments.
-//   - line doc:  /// …            (exactly three slashes; //// … stays a plain comment)
-//   - block doc: /** … */         (but /**/ is an empty plain block comment, not a doc)
+//   - forward line doc:   /// …       (exactly three slashes; //// … stays a plain comment)
+//   - backward line doc:  //! …       (attaches to the preceding declaration)
+//   - forward block doc:  /** … */    (but /**/ is an empty plain block comment, not a doc)
+//   - backward block doc: /*! … */    (attaches to the preceding declaration)
 LINE_DOC_COMMENT        = "///" ( [^/\r\n] [^\r\n]* )?
+LINE_DOC_COMMENT_BWD    = "//!" [^\r\n]*
 BLOCK_DOC_COMMENT       = "/**" ~"*/"
+BLOCK_DOC_COMMENT_BWD   = "/*!" ~"*/"
 LINE_COMMENT            = "//" [^\r\n]*
 BLOCK_COMMENT           = "/*" ([^*] | "*"+ [^/*])* "*"+ "/"
 
@@ -89,7 +93,9 @@ LIT_STRING              = {ENC_PREFIX}? "\"" ( {ESCAPE_SEQ} | [^\"\\] )* "\""
     // Documentation comments must be tried BEFORE the ordinary comment rules:
     // for equal-length matches JFlex picks the rule listed first.
     {LINE_DOC_COMMENT}          { return KlangTypes.LINE_DOC_COMMENT; }
+    {LINE_DOC_COMMENT_BWD}      { return KlangTypes.LINE_DOC_COMMENT_BWD; }
     {BLOCK_DOC_COMMENT}         { return KlangTypes.BLOCK_DOC_COMMENT; }
+    {BLOCK_DOC_COMMENT_BWD}     { return KlangTypes.BLOCK_DOC_COMMENT_BWD; }
     {LINE_COMMENT}              { return KlangTypes.LINE_COMMENT; }
     {BLOCK_COMMENT}             { return KlangTypes.BLOCK_COMMENT; }
 
@@ -127,6 +133,7 @@ LIT_STRING              = {ENC_PREFIX}? "\"" ( {ESCAPE_SEQ} | [^\"\\] )* "\""
     "while"                     { return KlangTypes.KW_WHILE; }
     "for"                       { return KlangTypes.KW_FOR; }
     "break"                     { return KlangTypes.KW_BREAK; }
+    "continue"                  { return KlangTypes.KW_CONTINUE; }
     "new"                       { return KlangTypes.KW_NEW; }
     "delete"                    { return KlangTypes.KW_DELETE; }
     "default"                   { return KlangTypes.KW_DEFAULT; }
@@ -162,6 +169,7 @@ LIT_STRING              = {ENC_PREFIX}? "\"" ( {ESCAPE_SEQ} | [^\"\\] )* "\""
     "->*"                       { return KlangTypes.OP_ARROW_STAR; }
     "<<="                       { return KlangTypes.OP_LSHIFT_ASSIGN; }
     ">>="                       { return KlangTypes.OP_RSHIFT_ASSIGN; }
+    "<=>"                       { return KlangTypes.OP_SPACESHIP; }
     "..."                       { return KlangTypes.PUNC_ELLIPSIS; }
 
     // ── Two-char operators ────────────────────────────────────────────────

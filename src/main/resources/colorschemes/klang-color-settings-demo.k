@@ -70,6 +70,9 @@ public struct Point : Printable, Comparable<Point> {
     operator ==(other : Point&) : bool {
         return x == other.x && y == other.y;
     }
+
+    //! Three-way comparison (backward doc comment: attaches to the member above).
+    operator <=>(other : Point&) : int;
 }
 
 // ── Template function ─────────────────────────────────────────
@@ -86,6 +89,7 @@ sum(values : int[], n : int) : int {
     i : int = 0;
     while (i < n) {
         if (i > 1000) { break; }
+        if (values[i] < 0) { continue; }
         total += values[i];
         i++;
     }
@@ -123,6 +127,7 @@ main() : int {
     m : int = max<int>(10, 20);
 
     eq : bool = p == q;
+    cmp : int = p <=> q;
 
 
     mask : int = 0xFF & ~0x0F;

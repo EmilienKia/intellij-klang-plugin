@@ -4,7 +4,11 @@ import com.github.emilienkia.klang.plugin.language.psi.KlangCastOperatorFunction
 import com.github.emilienkia.klang.plugin.language.psi.KlangFile;
 import com.github.emilienkia.klang.plugin.language.psi.KlangFunctionDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangOperatorFunctionHead;
+import com.github.emilienkia.klang.plugin.language.psi.KlangSpaceshipExpr;
+import com.github.emilienkia.klang.plugin.language.psi.KlangTypes;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +27,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  *       {@code castOperatorFunctionHead} with no parameter list and an optional {@code : type},</li>
  *   <li>block declarations carry <strong>no trailing {@code ;}</strong> (an enum here), and a
  *       stray {@code ;} is tolerated as an <strong>empty declaration</strong>,</li>
- *   <li>a {@code generic<…>} declaration prefixing an aggregate.</li>
+ *   <li>a {@code generic<…>} declaration prefixing an aggregate,</li>
+ *   <li>the <strong>three-way comparison</strong> operator {@code operator <=>} and the
+ *       {@code a <=> b} spaceship expression,</li>
+ *   <li>{@code friend} declarations with optional <strong>template arguments</strong>
+ *       ({@code friend Iterator<T>;}),</li>
+ *   <li><strong>backward documentation comments</strong> {@code //!} and {@code /*! … *}{@code /}.</li>
  * </ul>
  */
 class KlangOperatorAndDeclarationParsingTest extends KlangFixtureTestBase {
@@ -34,6 +43,16 @@ class KlangOperatorAndDeclarationParsingTest extends KlangFixtureTestBase {
                 .withFailMessage(() -> "Unexpected parse errors: "
                         + errors.stream().map(PsiErrorElement::getErrorDescription).toList())
                 .isEmpty();
+    }
+
+    /** True if any leaf token under {@code file} has the given element type. */
+    private static boolean hasLeafOfType(KlangFile file, IElementType type) {
+        for (PsiElement leaf : PsiTreeUtil.collectElements(file,
+                e -> e.getFirstChild() == null && e.getNode() != null
+                        && e.getNode().getElementType() == type)) {
+            if (leaf != null) return true;
+        }
+        return false;
     }
 
     @Test
@@ -140,6 +159,84 @@ class KlangOperatorAndDeclarationParsingTest extends KlangFixtureTestBase {
                     """);
 
             assertNoParseErrors(file);
+        });
+    }
+
+    @Test
+    void spaceshipOperatorOverloadParses() {
+        onEdt(() -> {
+            KlangFile file = parse("""
+                    module demo;
+                    struct Point {
+                        x : int;
+                        operator <=>(other : Point&) : int;
+                    }
+                    """);
+
+            assertNoParseErrors(file);
+
+            KlangFunctionDecl fn = PsiTreeUtil.findChildOfType(file, KlangFunctionDecl.class);
+            assertThat(fn).isNotNull();
+            KlangOperatorFunctionHead head = fn.getOperatorFunctionHead();
+            assertThat(head).as("operator <=> is an operatorFunctionHead").isNotNull();
+            assertThat(head.getOperatorSymbol()).isNotNull();
+            assertThat(head.getText().replaceAll("\\s+", "")).isEqualTo("operator<=>");
+        });
+    }
+
+    @Test
+    void spaceshipExpressionParses() {
+        onEdt(() -> {
+            KlangFile file = parse("""
+                    module demo;
+                    compare(a : int, b : int) : int {
+                        return a <=> b;
+                    }
+                    """);
+
+            assertNoParseErrors(file);
+
+            KlangSpaceshipExpr expr = PsiTreeUtil.findChildOfType(file, KlangSpaceshipExpr.class);
+            assertThat(expr).as("a <=> b builds a spaceshipExpr node").isNotNull();
+            assertThat(hasLeafOfType(file, KlangTypes.OP_SPACESHIP)).isTrue();
+        });
+    }
+
+    @Test
+    void friendWithTemplateArgumentsParses() {
+        onEdt(() -> {
+            KlangFile file = parse("""
+                    module demo;
+                    template<typename T>
+                    class Container {
+                        friend Iterator<T>;
+                        friend struct Helper<int>;
+                    }
+                    """);
+
+            assertNoParseErrors(file);
+        });
+    }
+
+    @Test
+    void backwardDocCommentsAreRecognisedAsDocTokens() {
+        onEdt(() -> {
+            KlangFile file = parse("""
+                    module demo;
+                    struct Point {
+                        x : int;
+                        //! Backward line doc attached to the member above.
+                        y : int;
+                        /*! Backward block doc. */
+                        z : int;
+                    }
+                    """);
+
+            assertNoParseErrors(file);
+            assertThat(hasLeafOfType(file, KlangTypes.LINE_DOC_COMMENT_BWD))
+                    .as("//! is lexed as a backward line documentation comment").isTrue();
+            assertThat(hasLeafOfType(file, KlangTypes.BLOCK_DOC_COMMENT_BWD))
+                    .as("/*! … */ is lexed as a backward block documentation comment").isTrue();
         });
     }
 }

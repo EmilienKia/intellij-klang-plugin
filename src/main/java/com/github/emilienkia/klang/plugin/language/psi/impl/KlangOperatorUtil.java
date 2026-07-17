@@ -47,7 +47,7 @@ public final class KlangOperatorUtil {
     /** Expression operator tokens that may be overloaded as {@code operator <sym>}. */
     public static final TokenSet OPERATOR_TOKENS = TokenSet.create(
             KlangTypes.OP_EQ, KlangTypes.OP_NEQ, KlangTypes.OP_LT, KlangTypes.OP_GT,
-            KlangTypes.OP_LE, KlangTypes.OP_GE,
+            KlangTypes.OP_LE, KlangTypes.OP_GE, KlangTypes.OP_SPACESHIP,
             KlangTypes.OP_PLUS, KlangTypes.OP_MINUS, KlangTypes.OP_STAR, KlangTypes.OP_DIV,
             KlangTypes.OP_PERCENT, KlangTypes.OP_POW,
             KlangTypes.OP_AMP, KlangTypes.OP_PIPE, KlangTypes.OP_CARET, KlangTypes.OP_TILDE,

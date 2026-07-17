@@ -504,6 +504,18 @@ public class KlangParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // 'continue' ';'
+  public static boolean continueStatement(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "continueStatement")) return false;
+    if (!nextTokenIs(b, "<continue statement>", KW_CONTINUE)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, CONTINUE_STATEMENT, "<continue statement>");
+    r = consumeTokens(b, 0, KW_CONTINUE, PUNC_SEMICOLON);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // '(' typeSpec ')' castExpr
   //            | unaryExpr
   public static boolean castExpr(PsiBuilder b, int l) {
@@ -1203,7 +1215,7 @@ public class KlangParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'friend' friendFilter? qualifiedIdentifier ';'
+  // 'friend' friendFilter? qualifiedIdentifier templateArgList? ';'
   public static boolean friendDecl(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "friendDecl")) return false;
     if (!nextTokenIs(b, "<friend declaration>", KW_FRIEND)) return false;
@@ -1213,6 +1225,7 @@ public class KlangParser implements PsiParser, LightPsiParser {
     p = r; // pin = 1
     r = r && report_error_(b, friendDecl_1(b, l + 1));
     r = p && report_error_(b, qualifiedIdentifier(b, l + 1)) && r;
+    r = p && report_error_(b, friendDecl_3(b, l + 1)) && r;
     r = p && consumeToken(b, PUNC_SEMICOLON) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -1222,6 +1235,13 @@ public class KlangParser implements PsiParser, LightPsiParser {
   private static boolean friendDecl_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "friendDecl_1")) return false;
     friendFilter(b, l + 1);
+    return true;
+  }
+
+  // templateArgList?
+  private static boolean friendDecl_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "friendDecl_3")) return false;
+    templateArgList(b, l + 1);
     return true;
   }
 
@@ -2412,7 +2432,7 @@ public class KlangParser implements PsiParser, LightPsiParser {
   //                  | '&'  | '|'   | '^'   | '~'
   //                  | '<<' | '>>'
   //                  | '&&' | '||'  | '!'
-  //                  | '==' | '!='  | '<'   | '>'   | '<=' | '>='
+  //                  | '==' | '!='  | '<'   | '>'   | '<=' | '>=' | '<=>'
   //                  | '='  | '+='  | '-='  | '*='  | '/=' | '%='
   //                  | '&=' | '|='  | '^='  | '<<=' | '>>='
   //                  | '++' '_'
@@ -2443,6 +2463,7 @@ public class KlangParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, OP_GT);
     if (!r) r = consumeToken(b, OP_LE);
     if (!r) r = consumeToken(b, OP_GE);
+    if (!r) r = consumeToken(b, OP_SPACESHIP);
     if (!r) r = consumeToken(b, OP_ASSIGN);
     if (!r) r = consumeToken(b, OP_PLUS_ASSIGN);
     if (!r) r = consumeToken(b, OP_MINUS_ASSIGN);
@@ -2454,17 +2475,17 @@ public class KlangParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, OP_XOR_ASSIGN);
     if (!r) r = consumeToken(b, OP_LSHIFT_ASSIGN);
     if (!r) r = consumeToken(b, OP_RSHIFT_ASSIGN);
-    if (!r) r = operatorSymbol_31(b, l + 1);
     if (!r) r = operatorSymbol_32(b, l + 1);
     if (!r) r = operatorSymbol_33(b, l + 1);
     if (!r) r = operatorSymbol_34(b, l + 1);
+    if (!r) r = operatorSymbol_35(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   // '++' '_'
-  private static boolean operatorSymbol_31(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "operatorSymbol_31")) return false;
+  private static boolean operatorSymbol_32(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "operatorSymbol_32")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, OP_INC);
@@ -2474,8 +2495,8 @@ public class KlangParser implements PsiParser, LightPsiParser {
   }
 
   // '--' '_'
-  private static boolean operatorSymbol_32(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "operatorSymbol_32")) return false;
+  private static boolean operatorSymbol_33(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "operatorSymbol_33")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, OP_DEC);
@@ -2485,8 +2506,8 @@ public class KlangParser implements PsiParser, LightPsiParser {
   }
 
   // '_'  '++'
-  private static boolean operatorSymbol_33(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "operatorSymbol_33")) return false;
+  private static boolean operatorSymbol_34(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "operatorSymbol_34")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, "_");
@@ -2496,8 +2517,8 @@ public class KlangParser implements PsiParser, LightPsiParser {
   }
 
   // '_'  '--'
-  private static boolean operatorSymbol_34(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "operatorSymbol_34")) return false;
+  private static boolean operatorSymbol_35(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "operatorSymbol_35")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, "_");
@@ -2869,18 +2890,18 @@ public class KlangParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // shiftingExpr (('<' | '>' | '<=' | '>=') shiftingExpr)*
+  // spaceshipExpr (('<' | '>' | '<=' | '>=') spaceshipExpr)*
   public static boolean relationalExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "relationalExpr")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, RELATIONAL_EXPR, "<relational expression>");
-    r = shiftingExpr(b, l + 1);
+    r = spaceshipExpr(b, l + 1);
     r = r && relationalExpr_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // (('<' | '>' | '<=' | '>=') shiftingExpr)*
+  // (('<' | '>' | '<=' | '>=') spaceshipExpr)*
   private static boolean relationalExpr_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "relationalExpr_1")) return false;
     while (true) {
@@ -2891,13 +2912,13 @@ public class KlangParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // ('<' | '>' | '<=' | '>=') shiftingExpr
+  // ('<' | '>' | '<=' | '>=') spaceshipExpr
   private static boolean relationalExpr_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "relationalExpr_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = relationalExpr_1_0_0(b, l + 1);
-    r = r && shiftingExpr(b, l + 1);
+    r = r && spaceshipExpr(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2993,6 +3014,40 @@ public class KlangParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // shiftingExpr ('<=>' shiftingExpr)*
+  public static boolean spaceshipExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "spaceshipExpr")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, SPACESHIP_EXPR, "<three-way comparison expression>");
+    r = shiftingExpr(b, l + 1);
+    r = r && spaceshipExpr_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // ('<=>' shiftingExpr)*
+  private static boolean spaceshipExpr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "spaceshipExpr_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!spaceshipExpr_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "spaceshipExpr_1", c)) break;
+    }
+    return true;
+  }
+
+  // '<=>' shiftingExpr
+  private static boolean spaceshipExpr_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "spaceshipExpr_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, OP_SPACESHIP);
+    r = r && shiftingExpr(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // 'public' | 'protected' | 'private'
   //             | 'static' | 'const'     | 'abstract' | 'final' | 'override' | 'default'
   public static boolean specifier(PsiBuilder b, int l) {
@@ -3016,6 +3071,7 @@ public class KlangParser implements PsiParser, LightPsiParser {
   // blockStatement
   //             | returnStatement
   //             | breakStatement
+  //             | continueStatement
   //             | ifElseStatement
   //             | whileStatement
   //             | forStatement
@@ -3031,6 +3087,7 @@ public class KlangParser implements PsiParser, LightPsiParser {
     r = blockStatement(b, l + 1);
     if (!r) r = returnStatement(b, l + 1);
     if (!r) r = breakStatement(b, l + 1);
+    if (!r) r = continueStatement(b, l + 1);
     if (!r) r = ifElseStatement(b, l + 1);
     if (!r) r = whileStatement(b, l + 1);
     if (!r) r = forStatement(b, l + 1);

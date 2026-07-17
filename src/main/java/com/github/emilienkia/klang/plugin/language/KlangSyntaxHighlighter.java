@@ -23,7 +23,8 @@ public class KlangSyntaxHighlighter implements SyntaxHighlighter {
             createTextAttributesKey("KLANG_LINE_COMMENT",  DefaultLanguageHighlighterColors.LINE_COMMENT);
     public static final TextAttributesKey BLOCK_COMMENT =
             createTextAttributesKey("KLANG_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
-    /** Documentation comments (Javadoc / Doxygen style): {@code ///} and {@code /** … *}{@code /}. */
+    /** Documentation comments (Javadoc / Doxygen style): forward {@code ///}, {@code /** … *}{@code /}
+     *  and backward {@code //!}, {@code /*! … *}{@code /}. */
     public static final TextAttributesKey LINE_DOC_COMMENT =
             createTextAttributesKey("KLANG_LINE_DOC_COMMENT",  DefaultLanguageHighlighterColors.DOC_COMMENT);
     public static final TextAttributesKey BLOCK_DOC_COMMENT =
@@ -172,7 +173,9 @@ public class KlangSyntaxHighlighter implements SyntaxHighlighter {
         map(LINE_COMMENT,       KlangTypes.LINE_COMMENT);
         map(BLOCK_COMMENT,      KlangTypes.BLOCK_COMMENT);
         map(LINE_DOC_COMMENT,   KlangTypes.LINE_DOC_COMMENT);
+        map(LINE_DOC_COMMENT,   KlangTypes.LINE_DOC_COMMENT_BWD);
         map(BLOCK_DOC_COMMENT,  KlangTypes.BLOCK_DOC_COMMENT);
+        map(BLOCK_DOC_COMMENT,  KlangTypes.BLOCK_DOC_COMMENT_BWD);
 
         // keywords — types
         mapSet(KEYWORD_TYPE,     KlangTokenSets.KEYWORDS_TYPE);

@@ -5,9 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface KlangRelationalExpr extends PsiElement {
+public interface KlangSpaceshipExpr extends PsiElement {
 
   @NotNull
-  List<KlangSpaceshipExpr> getSpaceshipExprList();
+  List<KlangShiftingExpr> getShiftingExprList();
 
 }

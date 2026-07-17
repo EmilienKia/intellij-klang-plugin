@@ -290,10 +290,14 @@ A `.kdi` is the K equivalent of a C `.h`: module declarations + doc + template d
 
 ## Grammar / parsing (✅ most features done)
 
-- [!] **Doc-comment tokens** — `LINE_DOC_COMMENT` / `BLOCK_DOC_COMMENT` bridge-edited into `KlangTypes.java`; regenerate parser to update.
+- [x] **Spaceship operator `<=>`** — lexed (`OP_SPACESHIP`), parsed (`spaceshipExpr` between relational and shift), highlighted as a comparison operator, and overloadable (`operator <=>`). Semantic follow-up: resolve a binary `<=>` usage to its overload, and surface auto-synthesised `< > <= >=` derived from a user `<=>` (the compiler now synthesises comparison operators from `<=>`) in operator-usage line markers / navigation.
+- [x] **Backward documentation comments `//!` and `/*!`** — lexed (`LINE_DOC_COMMENT_BWD` / `BLOCK_DOC_COMMENT_BWD`), highlighted like forward doc comments, folded and comment-aware. Semantic follow-up: attach backward doc to the *preceding* declaration (forward attaches to the following one) for quick-doc/hover.
+- [x] **Friend template arguments** — `friend Foo<T>;` / `friend Foo<int>;` now parse (`friendDecl ... templateArgList?`). Semantic follow-up: constrain friend resolution to the matching instantiation.
+- [x] **Doc-comment tokens** — `LINE_DOC_COMMENT` / `BLOCK_DOC_COMMENT` (+ `_BWD` variants) and `OP_SPACESHIP` are present in the regenerated `KlangTypes.java` (GrammarKit) and `KlangLexer.java` (JFlex). Regeneration verified — full test suite green.
 - [x] **Parser error recovery** — `recoverWhile` + `pin` directives prevent cascading errors from breaking downstream references.
 - [x] **Annotation left-factoring** — `@Foo(…)` / `@Foo{…}` now parse correctly (PEG ordered-choice fix).
-- [!] **Subscript / cast operator PSI** — new `KlangCastOperatorFunctionHead` type; regenerate parser to update.
+- [x] **Subscript / cast operator PSI** — `KlangCastOperatorFunctionHead` type present in regenerated parser.
+- [x] **`default` as a declaration-start** — `default` is a `specifier` (default interface method), so it is now also listed in the private `declarationFirst` rule. Without it, error-recovery (`recoverWhile`) consumed a leading `default` as a stray token (`'default' unexpected`) before `functionDecl` could match. Regression covered by `interfaceDefaultMethodSpecifierParses`.
 - [x] **Subscript operator navigation** — Ctrl-Click on `[` / `]` in indexing expressions jumps to `operator[]` overload.
 - [ ] **Cast / conversion operator navigation** — `operator()` parsed but semantics TODO.
 - [x] **Empty declaration `;`** — tolerated and reported as warning.

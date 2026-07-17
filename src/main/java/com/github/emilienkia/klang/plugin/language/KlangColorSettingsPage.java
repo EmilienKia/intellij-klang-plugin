@@ -58,7 +58,7 @@ public class KlangColorSettingsPage implements ColorSettingsPage {
             // Operators
             new AttributesDescriptor("Operators//Arithmetic (+  -  *  /  %  **)",          KlangSyntaxHighlighter.OPERATOR_ARITH),
             new AttributesDescriptor("Operators//Assignment (=  +=  -=  …)",               KlangSyntaxHighlighter.OPERATOR_ASSIGN),
-            new AttributesDescriptor("Operators//Comparison (==  !=  <  >  <=  >=)",       KlangSyntaxHighlighter.OPERATOR_COMPARE),
+            new AttributesDescriptor("Operators//Comparison (==  !=  <  >  <=  >=  <=>)", KlangSyntaxHighlighter.OPERATOR_COMPARE),
             new AttributesDescriptor("Operators//Logical (&&  ||  !)",                     KlangSyntaxHighlighter.OPERATOR_LOGICAL),
             new AttributesDescriptor("Operators//Bitwise (&  |  ^  ~  <<  >>  #)",         KlangSyntaxHighlighter.OPERATOR_BITWISE),
             new AttributesDescriptor("Operators//Increment / decrement (++  --)",          KlangSyntaxHighlighter.OPERATOR_INCDEC),
@@ -172,6 +172,9 @@ public class KlangColorSettingsPage implements ColorSettingsPage {
                     operator <operatorDecl>==</operatorDecl>(other : <typeRef>Point</typeRef>&) : bool {
                         return <varRef>x</varRef> == <paramRef>other</paramRef>.<varRef>x</varRef> && <varRef>y</varRef> == <paramRef>other</paramRef>.<varRef>y</varRef>;
                     }
+
+                    //! Three-way comparison (backward doc comment: attaches to the member above).
+                    operator <operatorDecl><=></operatorDecl>(other : <typeRef>Point</typeRef>&) : int;
                 }
 
                 // ── Template function ─────────────────────────────────────────
@@ -225,6 +228,7 @@ public class KlangColorSettingsPage implements ColorSettingsPage {
                     <varDecl>m</varDecl> : int = <funCall>max</funCall><<typeRef>int</typeRef>>(10, 20);
 
                     <varDecl>eq</varDecl> : bool = <varRef>p</varRef> == <varRef>q</varRef>;
+                    <varDecl>cmp</varDecl> : int = <varRef>p</varRef> <=> <varRef>q</varRef>;
 
                     <varDecl>mask</varDecl> : int = 0xFF & ~0x0F;
                     <varDecl>flag</varDecl> : bool = (<varRef>mask</varRef> >> 4) != 0 || false;

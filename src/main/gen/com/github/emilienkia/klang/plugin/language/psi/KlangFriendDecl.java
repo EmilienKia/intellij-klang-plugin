@@ -13,4 +13,7 @@ public interface KlangFriendDecl extends PsiElement {
   @Nullable
   KlangQualifiedIdentifier getQualifiedIdentifier();
 
+  @Nullable
+  KlangTemplateArgList getTemplateArgList();
+
 }

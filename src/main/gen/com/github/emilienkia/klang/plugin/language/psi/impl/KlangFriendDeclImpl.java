@@ -39,4 +39,10 @@ public class KlangFriendDeclImpl extends ASTWrapperPsiElement implements KlangFr
     return findChildByClass(KlangQualifiedIdentifier.class);
   }
 
+  @Override
+  @Nullable
+  public KlangTemplateArgList getTemplateArgList() {
+    return findChildByClass(KlangTemplateArgList.class);
+  }
+
 }

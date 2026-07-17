@@ -51,6 +51,10 @@ public class KlangVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitContinueStatement(@NotNull KlangContinueStatement o) {
+    visitPsiElement(o);
+  }
+
   public void visitCastExpr(@NotNull KlangCastExpr o) {
     visitPsiElement(o);
   }
@@ -292,6 +296,10 @@ public class KlangVisitor extends PsiElementVisitor {
   }
 
   public void visitShiftingExpr(@NotNull KlangShiftingExpr o) {
+    visitPsiElement(o);
+  }
+
+  public void visitSpaceshipExpr(@NotNull KlangSpaceshipExpr o) {
     visitPsiElement(o);
   }
 

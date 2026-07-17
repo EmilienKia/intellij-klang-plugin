@@ -57,12 +57,21 @@ public class KlangFoldingBuilder implements FoldingBuilder {
             }
         }
 
-        // Also fold block comments (ordinary and documentation)
-        if (type == KlangTypes.BLOCK_COMMENT || type == KlangTypes.BLOCK_DOC_COMMENT) {
+        // Also fold block comments (ordinary and documentation, forward & backward)
+        if (type == KlangTypes.BLOCK_COMMENT
+                || type == KlangTypes.BLOCK_DOC_COMMENT
+                || type == KlangTypes.BLOCK_DOC_COMMENT_BWD) {
             TextRange range = node.getTextRange();
             if (document.getLineNumber(range.getStartOffset()) <
                 document.getLineNumber(range.getEndOffset() - 1)) {
-                String placeholder = type == KlangTypes.BLOCK_DOC_COMMENT ? "/**...*/" : "/*...*/";
+                String placeholder;
+                if (type == KlangTypes.BLOCK_DOC_COMMENT) {
+                    placeholder = "/**...*/";
+                } else if (type == KlangTypes.BLOCK_DOC_COMMENT_BWD) {
+                    placeholder = "/*!...*/";
+                } else {
+                    placeholder = "/*...*/";
+                }
                 descriptors.add(new FoldingDescriptor(node, range, null, placeholder));
             }
         }

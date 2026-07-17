@@ -2,3 +2,6 @@
 .idea
 .intellijPlatform
 build
+# JFlex generator artifacts (should never be committed)
+jflex-*.jar
+*.skeleton

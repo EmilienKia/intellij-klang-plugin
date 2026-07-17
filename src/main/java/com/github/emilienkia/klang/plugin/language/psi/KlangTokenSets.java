@@ -9,7 +9,9 @@ public class KlangTokenSets {
             KlangTypes.LINE_COMMENT,
             KlangTypes.BLOCK_COMMENT,
             KlangTypes.LINE_DOC_COMMENT,
-            KlangTypes.BLOCK_DOC_COMMENT
+            KlangTypes.LINE_DOC_COMMENT_BWD,
+            KlangTypes.BLOCK_DOC_COMMENT,
+            KlangTypes.BLOCK_DOC_COMMENT_BWD
     );
 
     // ── Keywords (all) ────────────────────────────────────────────────────────
@@ -25,7 +27,7 @@ public class KlangTokenSets {
             KlangTypes.KW_PUBLIC,     KlangTypes.KW_PROTECTED, KlangTypes.KW_PRIVATE,
             KlangTypes.KW_THIS,       KlangTypes.KW_RETURN,
             KlangTypes.KW_IF,         KlangTypes.KW_ELSE,      KlangTypes.KW_WHILE,
-            KlangTypes.KW_FOR,        KlangTypes.KW_BREAK,
+            KlangTypes.KW_FOR,        KlangTypes.KW_BREAK,      KlangTypes.KW_CONTINUE,
             KlangTypes.KW_NEW,        KlangTypes.KW_DELETE,
             KlangTypes.KW_DEFAULT,    KlangTypes.KW_ENUM,      KlangTypes.KW_UNION,
             KlangTypes.KW_OPERATOR,
@@ -59,11 +61,11 @@ public class KlangTokenSets {
             KlangTypes.KW_PUBLIC,    KlangTypes.KW_PROTECTED, KlangTypes.KW_PRIVATE
     );
 
-    /** Control-flow keywords: if else while for break return throw try catch finally throws */
+    /** Control-flow keywords: if else while for break continue return throw try catch finally throws */
     public static final TokenSet KEYWORDS_CONTROL = TokenSet.create(
             KlangTypes.KW_IF,     KlangTypes.KW_ELSE,
             KlangTypes.KW_WHILE,  KlangTypes.KW_FOR,
-            KlangTypes.KW_BREAK,  KlangTypes.KW_RETURN,
+            KlangTypes.KW_BREAK,  KlangTypes.KW_CONTINUE,  KlangTypes.KW_RETURN,
             KlangTypes.KW_THROW,  KlangTypes.KW_THROWS,
             KlangTypes.KW_TRY,    KlangTypes.KW_CATCH,    KlangTypes.KW_FINALLY
     );
@@ -118,6 +120,7 @@ public class KlangTokenSets {
             KlangTypes.OP_AND,   KlangTypes.OP_OR,      KlangTypes.OP_NOT,
             KlangTypes.OP_EQ,    KlangTypes.OP_NEQ,
             KlangTypes.OP_LT,    KlangTypes.OP_GT,      KlangTypes.OP_LE, KlangTypes.OP_GE,
+            KlangTypes.OP_SPACESHIP,
             KlangTypes.OP_ASSIGN,
             KlangTypes.OP_PLUS_ASSIGN, KlangTypes.OP_MINUS_ASSIGN, KlangTypes.OP_STAR_ASSIGN,
             KlangTypes.OP_DIV_ASSIGN,  KlangTypes.OP_MOD_ASSIGN,
@@ -146,11 +149,12 @@ public class KlangTokenSets {
             KlangTypes.OP_LSHIFT_ASSIGN, KlangTypes.OP_RSHIFT_ASSIGN
     );
 
-    /** Comparison: == != < > <= >= */
+    /** Comparison: == != < > <= >= <=> */
     public static final TokenSet OPERATORS_COMPARE = TokenSet.create(
             KlangTypes.OP_EQ,  KlangTypes.OP_NEQ,
             KlangTypes.OP_LT,  KlangTypes.OP_GT,
-            KlangTypes.OP_LE,  KlangTypes.OP_GE
+            KlangTypes.OP_LE,  KlangTypes.OP_GE,
+            KlangTypes.OP_SPACESHIP
     );
 
     /** Logical: && || ! */

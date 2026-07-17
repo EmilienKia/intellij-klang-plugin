@@ -49,7 +49,9 @@ public class KlangAnnotator implements Annotator {
         TOKEN_LABELS.put("LINE_COMMENT",    "line comment");
         TOKEN_LABELS.put("BLOCK_COMMENT",   "block comment");
         TOKEN_LABELS.put("LINE_DOC_COMMENT", "line documentation comment");
+        TOKEN_LABELS.put("LINE_DOC_COMMENT_BWD", "backward line documentation comment");
         TOKEN_LABELS.put("BLOCK_DOC_COMMENT", "block documentation comment");
+        TOKEN_LABELS.put("BLOCK_DOC_COMMENT_BWD", "backward block documentation comment");
         TOKEN_LABELS.put("PUNC_SEMICOLON",  "';'");
         TOKEN_LABELS.put("PUNC_COMMA",      "','");
         TOKEN_LABELS.put("PUNC_LPAREN",     "'('");
@@ -67,6 +69,7 @@ public class KlangAnnotator implements Annotator {
         TOKEN_LABELS.put("OP_DOT",          "'.'");
         TOKEN_LABELS.put("OP_ARROW",        "'->'");
         TOKEN_LABELS.put("OP_TILDE",        "'~'");
+        TOKEN_LABELS.put("OP_SPACESHIP",    "'<=>'");
     }
 
     @Override

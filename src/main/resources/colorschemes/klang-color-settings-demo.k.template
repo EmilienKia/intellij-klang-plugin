@@ -70,6 +70,9 @@ public struct Point : Printable, Comparable<Point> {
     operator <operatorDecl>==</operatorDecl>(other : Point&) : bool {
         return x == other.x && y == other.y;
     }
+
+    //! Three-way comparison (backward doc comment: attaches to the member above).
+    operator <operatorDecl><=></operatorDecl>(other : Point&) : int;
 }
 
 // ── Template function ─────────────────────────────────────────
@@ -86,6 +89,7 @@ template<typename T>
     <varDecl>i</varDecl> : int = 0;
     while (i < n) {
         if (i > 1000) { break; }
+        if (values[i] < 0) { continue; }
         total += values[i];
         i++;
     }
@@ -123,6 +127,7 @@ template<typename T>
     <varDecl>m</varDecl> : int = max<int>(10, 20);
 
     <varDecl>eq</varDecl> : bool = p == q;
+    <varDecl>cmp</varDecl> : int = p <=> q;
 
 
     <varDecl>mask</varDecl> : int = 0xFF & ~0x0F;

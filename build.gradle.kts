@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.emilienkia.klang"
-version = "1.0.0-SNAPSHOT"
+version = "0.1.0-SNAPSHOT"
 
 // Set the JVM language level used to build the project.
 kotlin {
@@ -50,7 +50,7 @@ dependencies {
     // IntelliJ JUnit5 test framework (TestFixtureExtension) calls APIs added in 5.12.
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.12.2")
-    testImplementation("org.assertj:assertj-core:3.27.3")
+    testImplementation("org.assertj:assertj-core:3.27.7")
     // The IntelliJ platform test framework's JUnit5 session listener references
     // junit.framework.TestCase, so JUnit 4 must be present on the test classpath.
     testRuntimeOnly("junit:junit:4.13.2")

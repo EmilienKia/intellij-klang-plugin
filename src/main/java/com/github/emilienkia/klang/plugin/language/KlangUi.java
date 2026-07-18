@@ -18,7 +18,7 @@ public abstract class KlangUi {
         private Icons() {
         }
 
-        public static final Icon FILE = IconLoader.getIcon("/icons/klang.png", KlangUi.class);
+        public static final Icon FILE = IconLoader.getIcon("/icons/klang.svg", KlangUi.class);
 
         // Nodes
         public static final Icon NAMESPACE = AllIcons.Nodes.Package;

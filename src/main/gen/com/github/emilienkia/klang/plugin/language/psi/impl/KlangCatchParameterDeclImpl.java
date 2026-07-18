@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangCatchParameterDeclImpl extends KlangNamedDeclMixin implements KlangCatchParameterDecl {
 
-  public KlangCatchParameterDeclImpl(@NotNull ASTNode node) {
+  public KlangCatchParameterDeclImpl(ASTNode node) {
     super(node);
   }
 

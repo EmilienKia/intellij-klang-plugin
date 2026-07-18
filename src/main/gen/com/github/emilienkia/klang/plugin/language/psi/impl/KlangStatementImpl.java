@@ -41,6 +41,12 @@ public class KlangStatementImpl extends ASTWrapperPsiElement implements KlangSta
 
   @Override
   @Nullable
+  public KlangContinueStatement getContinueStatement() {
+    return findChildByClass(KlangContinueStatement.class);
+  }
+
+  @Override
+  @Nullable
   public KlangExpressionStatement getExpressionStatement() {
     return findChildByClass(KlangExpressionStatement.class);
   }
@@ -49,6 +55,12 @@ public class KlangStatementImpl extends ASTWrapperPsiElement implements KlangSta
   @Nullable
   public KlangForStatement getForStatement() {
     return findChildByClass(KlangForStatement.class);
+  }
+
+  @Override
+  @Nullable
+  public KlangForeachStatement getForeachStatement() {
+    return findChildByClass(KlangForeachStatement.class);
   }
 
   @Override

@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangIfCondVarDeclImpl extends KlangNamedDeclMixin implements KlangIfCondVarDecl {
 
-  public KlangIfCondVarDeclImpl(@NotNull ASTNode node) {
+  public KlangIfCondVarDeclImpl(ASTNode node) {
     super(node);
   }
 

@@ -157,6 +157,15 @@ main() : int {
         fa.data[i] = i * 2;
     }
 
+    // foreach: same syntax over an array, an ::k::Iterator<T>/ConstIterator<T>, or a
+    // Sequence<T>/MutableSequence<T> — the concrete kind is resolved from the source type.
+    for (v : int = data) {
+        bits += v;
+    }
+    for (v : int = int[]{1, 2, 30}) {
+        bits += v;
+    }
+
     try {
         risky();
     } catch (e : Error&) {

@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangTemplateParameterImpl extends KlangNamedDeclMixin implements KlangTemplateParameter {
 
-  public KlangTemplateParameterImpl(@NotNull ASTNode node) {
+  public KlangTemplateParameterImpl(ASTNode node) {
     super(node);
   }
 

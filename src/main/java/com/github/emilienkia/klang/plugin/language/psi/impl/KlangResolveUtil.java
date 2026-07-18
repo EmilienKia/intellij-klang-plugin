@@ -1203,6 +1203,14 @@ public final class KlangResolveUtil {
             if (vd != null && name.equals(vd.getName())) {
                 results.add(vd);
             }
+        } else if (scope instanceof KlangForeachStatement foreachStmt) {
+            // Foreach-statement scope: 'for ( name : type = source ) body' — the loop
+            // variable is visible inside the nested body (and is re-declared/destroyed
+            // every iteration, but that does not affect static name resolution).
+            KlangForeachVarDecl vd = foreachStmt.getForeachVarDecl();
+            if (vd != null && name.equals(vd.getName())) {
+                results.add(vd);
+            }
         } else if (scope instanceof KlangIfElseStatement ifStmt) {
             // If-condition variables are visible inside the if body
             collectIfCondVars(ifStmt, name, results);

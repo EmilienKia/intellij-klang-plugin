@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangDesignatedMemberNameImpl extends KlangDesignatedMemberNameMixin implements KlangDesignatedMemberName {
 
-  public KlangDesignatedMemberNameImpl(@NotNull ASTNode node) {
+  public KlangDesignatedMemberNameImpl(ASTNode node) {
     super(node);
   }
 

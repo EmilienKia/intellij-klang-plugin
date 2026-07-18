@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangUnionDeclImpl extends KlangNamedDeclMixin implements KlangUnionDecl {
 
-  public KlangUnionDeclImpl(@NotNull ASTNode node) {
+  public KlangUnionDeclImpl(ASTNode node) {
     super(node);
   }
 

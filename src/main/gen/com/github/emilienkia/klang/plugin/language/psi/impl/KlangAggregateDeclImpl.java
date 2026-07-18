@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangAggregateDeclImpl extends KlangNamedDeclMixin implements KlangAggregateDecl {
 
-  public KlangAggregateDeclImpl(@NotNull ASTNode node) {
+  public KlangAggregateDeclImpl(ASTNode node) {
     super(node);
   }
 

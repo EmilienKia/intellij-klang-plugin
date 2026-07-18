@@ -38,6 +38,8 @@ public interface KlangTypes {
   IElementType EXPRESSION_LIST = new KlangElementType("EXPRESSION_LIST");
   IElementType EXPRESSION_STATEMENT = new KlangElementType("EXPRESSION_STATEMENT");
   IElementType FINALLY_CLAUSE = new KlangElementType("FINALLY_CLAUSE");
+  IElementType FOREACH_STATEMENT = new KlangElementType("FOREACH_STATEMENT");
+  IElementType FOREACH_VAR_DECL = new KlangElementType("FOREACH_VAR_DECL");
   IElementType FOR_STATEMENT = new KlangElementType("FOR_STATEMENT");
   IElementType FRIEND_DECL = new KlangElementType("FRIEND_DECL");
   IElementType FRIEND_FILTER = new KlangElementType("FRIEND_FILTER");
@@ -76,6 +78,7 @@ public interface KlangTypes {
   IElementType POSTFIX_EXPR = new KlangElementType("POSTFIX_EXPR");
   IElementType POSTFIX_OP = new KlangElementType("POSTFIX_OP");
   IElementType PRIMARY_EXPR = new KlangElementType("PRIMARY_EXPR");
+  IElementType PRIMITIVE_ARRAY_ELEMENT_TYPE = new KlangElementType("PRIMITIVE_ARRAY_ELEMENT_TYPE");
   IElementType QUALIFIED_IDENTIFIER = new KlangElementType("QUALIFIED_IDENTIFIER");
   IElementType RELATIONAL_EXPR = new KlangElementType("RELATIONAL_EXPR");
   IElementType RETURN_STATEMENT = new KlangElementType("RETURN_STATEMENT");
@@ -263,9 +266,6 @@ public interface KlangTypes {
       else if (type == BREAK_STATEMENT) {
         return new KlangBreakStatementImpl(node);
       }
-      else if (type == CONTINUE_STATEMENT) {
-        return new KlangContinueStatementImpl(node);
-      }
       else if (type == CAST_EXPR) {
         return new KlangCastExprImpl(node);
       }
@@ -283,6 +283,9 @@ public interface KlangTypes {
       }
       else if (type == COND_VAR_INITIALISER) {
         return new KlangCondVarInitialiserImpl(node);
+      }
+      else if (type == CONTINUE_STATEMENT) {
+        return new KlangContinueStatementImpl(node);
       }
       else if (type == DECLARATION) {
         return new KlangDeclarationImpl(node);
@@ -319,6 +322,12 @@ public interface KlangTypes {
       }
       else if (type == FINALLY_CLAUSE) {
         return new KlangFinallyClauseImpl(node);
+      }
+      else if (type == FOREACH_STATEMENT) {
+        return new KlangForeachStatementImpl(node);
+      }
+      else if (type == FOREACH_VAR_DECL) {
+        return new KlangForeachVarDeclImpl(node);
       }
       else if (type == FOR_STATEMENT) {
         return new KlangForStatementImpl(node);
@@ -433,6 +442,9 @@ public interface KlangTypes {
       }
       else if (type == PRIMARY_EXPR) {
         return new KlangPrimaryExprImpl(node);
+      }
+      else if (type == PRIMITIVE_ARRAY_ELEMENT_TYPE) {
+        return new KlangPrimitiveArrayElementTypeImpl(node);
       }
       else if (type == QUALIFIED_IDENTIFIER) {
         return new KlangQualifiedIdentifierImpl(node);

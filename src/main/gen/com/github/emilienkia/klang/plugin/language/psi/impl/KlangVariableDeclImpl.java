@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangVariableDeclImpl extends KlangNamedDeclMixin implements KlangVariableDecl {
 
-  public KlangVariableDeclImpl(@NotNull ASTNode node) {
+  public KlangVariableDeclImpl(ASTNode node) {
     super(node);
   }
 

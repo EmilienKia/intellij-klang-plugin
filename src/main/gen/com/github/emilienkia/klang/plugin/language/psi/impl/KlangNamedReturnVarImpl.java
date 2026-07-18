@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangNamedReturnVarImpl extends KlangNamedDeclMixin implements KlangNamedReturnVar {
 
-  public KlangNamedReturnVarImpl(@NotNull ASTNode node) {
+  public KlangNamedReturnVarImpl(ASTNode node) {
     super(node);
   }
 

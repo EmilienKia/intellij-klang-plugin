@@ -14,10 +14,16 @@ public interface KlangStatement extends PsiElement {
   KlangBreakStatement getBreakStatement();
 
   @Nullable
+  KlangContinueStatement getContinueStatement();
+
+  @Nullable
   KlangExpressionStatement getExpressionStatement();
 
   @Nullable
   KlangForStatement getForStatement();
+
+  @Nullable
+  KlangForeachStatement getForeachStatement();
 
   @Nullable
   KlangIfElseStatement getIfElseStatement();

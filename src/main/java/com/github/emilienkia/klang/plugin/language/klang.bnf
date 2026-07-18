@@ -65,6 +65,9 @@
     implements("ifCondVarDecl")      = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
     mixin("ifCondVarDecl")           = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
 
+    implements("foreachVarDecl")     = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("foreachVarDecl")          = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
     implements("catchParameterDecl") = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
     mixin("catchParameterDecl")      = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
 
@@ -547,6 +550,7 @@ statement ::= blockStatement
             | continueStatement
             | ifElseStatement
             | whileStatement
+            | foreachStatement
             | forStatement
             | throwStatement
             | tryCatchStatement
@@ -586,6 +590,16 @@ condVarInitialiser ::= '=' conditionalExpr
 
 whileStatement ::= 'while' '(' expression ')' statement
     { name = "while statement" }
+
+// Tried before forStatement: 'for ( name : type = expr )' is only ever the foreach form,
+// while '(name : type = expr;' (trailing ';' instead of ')') belongs to the classic for and
+// is rolled back to be reparsed by forStatement below (mirrors the compiler's parser
+// disambiguation in parse_foreach_statement()/parse_for_statement()).
+foreachStatement ::= 'for' '(' foreachVarDecl '=' conditionalExpr ')' statement
+    { name = "foreach statement" }
+
+foreachVarDecl ::= specifier* IDENTIFIER ':' typeSpec
+    { name = "foreach loop variable declaration" }
 
 forStatement ::= 'for' '(' (variableDecl | ';') expression? ';' expression? ')' statement
     { name = "for statement" }
@@ -700,8 +714,16 @@ primaryExpr ::= literal
               | '(' expression ')'
               | annotationDef
               | braceInitList
+              | primitiveArrayElementType
               | identifierExpr
     { name = "primary expression" }
+
+// A bare simple primitive-type keyword (no 'unsigned', no compound forms like 'long long')
+// used as an identifier-like expression head, so that primitive array temporaries such as
+// 'int[]{1, 2, 3}' parse via the existing postfixOp '[' ']' braceInitList rule below —
+// mirroring parser.hpp's is_simple_primitive_type_keyword() in the klangc compiler.
+primitiveArrayElementType ::= 'bool' | 'byte' | 'char' | 'short' | 'int' | 'long' | 'float' | 'double'
+    { name = "primitive array element type" }
 
 identifierExpr ::= templateQualifiedScopeExpr
                  | qualifiedIdentifier

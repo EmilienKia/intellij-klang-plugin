@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangQualifiedIdentifierImpl extends KlangQualifiedIdentifierMixin implements KlangQualifiedIdentifier {
 
-  public KlangQualifiedIdentifierImpl(@NotNull ASTNode node) {
+  public KlangQualifiedIdentifierImpl(ASTNode node) {
     super(node);
   }
 

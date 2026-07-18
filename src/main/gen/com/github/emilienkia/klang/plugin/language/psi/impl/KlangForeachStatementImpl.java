@@ -8,16 +8,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.github.emilienkia.klang.plugin.language.psi.KlangTypes.*;
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.github.emilienkia.klang.plugin.language.psi.*;
 
-public class KlangEnumEntryImpl extends KlangNamedDeclMixin implements KlangEnumEntry {
+public class KlangForeachStatementImpl extends ASTWrapperPsiElement implements KlangForeachStatement {
 
-  public KlangEnumEntryImpl(ASTNode node) {
+  public KlangForeachStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull KlangVisitor visitor) {
-    visitor.visitEnumEntry(this);
+    visitor.visitForeachStatement(this);
   }
 
   @Override
@@ -27,21 +28,21 @@ public class KlangEnumEntryImpl extends KlangNamedDeclMixin implements KlangEnum
   }
 
   @Override
-  @Nullable
-  public KlangBraceInitList getBraceInitList() {
-    return findChildByClass(KlangBraceInitList.class);
+  @NotNull
+  public KlangConditionalExpr getConditionalExpr() {
+    return findNotNullChildByClass(KlangConditionalExpr.class);
   }
 
   @Override
-  @Nullable
-  public KlangExpressionList getExpressionList() {
-    return findChildByClass(KlangExpressionList.class);
+  @NotNull
+  public KlangForeachVarDecl getForeachVarDecl() {
+    return findNotNullChildByClass(KlangForeachVarDecl.class);
   }
 
   @Override
-  @Nullable
-  public PsiElement getLitInteger() {
-    return findChildByType(LIT_INTEGER);
+  @NotNull
+  public KlangStatement getStatement() {
+    return findNotNullChildByClass(KlangStatement.class);
   }
 
 }

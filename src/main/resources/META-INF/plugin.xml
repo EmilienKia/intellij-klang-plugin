@@ -188,6 +188,17 @@
                 level="WARNING"
                 implementationClass="com.github.emilienkia.klang.plugin.language.inspection.KlangOverrideSpecifierInspection"/>
 
+        <!-- 'final' is meaningless (and rejected by klangc) on a constructor or destructor,
+             since neither can be inherited/overridden. -->
+        <localInspection
+                language="K-lang"
+                shortName="KlangFinalOnCtorDtor"
+                displayName="'final' is not allowed on a constructor or destructor"
+                groupName="K-lang"
+                enabledByDefault="true"
+                level="ERROR"
+                implementationClass="com.github.emilienkia.klang.plugin.language.inspection.KlangFinalOnCtorDtorInspection"/>
+
         <!-- Spellchecking in identifiers (camelCase/snake_case split), comments and string literals.
              The strategy delegates comments to the platform's CommentTokenizer, splits identifiers
              with IdentifierSplitter (useRename=true so fixes propagate), and checks string literal

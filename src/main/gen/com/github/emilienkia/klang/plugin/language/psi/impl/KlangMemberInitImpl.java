@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangMemberInitImpl extends KlangMemberInitMixin implements KlangMemberInit {
 
-  public KlangMemberInitImpl(@NotNull ASTNode node) {
+  public KlangMemberInitImpl(ASTNode node) {
     super(node);
   }
 

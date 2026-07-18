@@ -255,6 +255,7 @@ public final class KlangTypeUtil {
         if (decl instanceof KlangParameterSpec p)       return p.getTypeSpec();
         if (decl instanceof KlangNamedReturnVar r)      return r.getTypeSpec();
         if (decl instanceof KlangIfCondVarDecl c)       return c.getTypeSpec();
+        if (decl instanceof KlangForeachVarDecl c)      return c.getTypeSpec();
         if (decl instanceof KlangCatchParameterDecl c)  return c.getTypeSpec();
         if (decl instanceof KlangUnionMemberDecl u)     return u.getTypeSpec();
         return null;

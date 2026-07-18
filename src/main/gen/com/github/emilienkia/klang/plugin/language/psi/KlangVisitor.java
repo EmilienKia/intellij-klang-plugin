@@ -51,10 +51,6 @@ public class KlangVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitContinueStatement(@NotNull KlangContinueStatement o) {
-    visitPsiElement(o);
-  }
-
   public void visitCastExpr(@NotNull KlangCastExpr o) {
     visitPsiElement(o);
   }
@@ -76,6 +72,10 @@ public class KlangVisitor extends PsiElementVisitor {
   }
 
   public void visitConditionalExpr(@NotNull KlangConditionalExpr o) {
+    visitPsiElement(o);
+  }
+
+  public void visitContinueStatement(@NotNull KlangContinueStatement o) {
     visitPsiElement(o);
   }
 
@@ -129,6 +129,14 @@ public class KlangVisitor extends PsiElementVisitor {
 
   public void visitForStatement(@NotNull KlangForStatement o) {
     visitPsiElement(o);
+  }
+
+  public void visitForeachStatement(@NotNull KlangForeachStatement o) {
+    visitPsiElement(o);
+  }
+
+  public void visitForeachVarDecl(@NotNull KlangForeachVarDecl o) {
+    visitNamedElement(o);
   }
 
   public void visitFriendDecl(@NotNull KlangFriendDecl o) {
@@ -276,6 +284,10 @@ public class KlangVisitor extends PsiElementVisitor {
   }
 
   public void visitPrimaryExpr(@NotNull KlangPrimaryExpr o) {
+    visitPsiElement(o);
+  }
+
+  public void visitPrimitiveArrayElementType(@NotNull KlangPrimitiveArrayElementType o) {
     visitPsiElement(o);
   }
 

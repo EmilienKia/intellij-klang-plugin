@@ -4,6 +4,7 @@ import com.github.emilienkia.klang.plugin.language.psi.KlangCatchParameterDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangEnumDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangEnumEntry;
 import com.github.emilienkia.klang.plugin.language.psi.KlangFunctionDecl;
+import com.github.emilienkia.klang.plugin.language.psi.KlangForeachVarDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangIdentifierExpr;
 import com.github.emilienkia.klang.plugin.language.psi.KlangIfCondVarDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangModuleDeclaration;
@@ -90,7 +91,8 @@ public class KlangSemanticHighlighter implements Annotator {
         }
         if (resolved instanceof KlangVariableDecl
                 || resolved instanceof KlangNamedReturnVar
-                || resolved instanceof KlangIfCondVarDecl) {
+                || resolved instanceof KlangIfCondVarDecl
+                || resolved instanceof KlangForeachVarDecl) {
             return KlangSyntaxHighlighter.IDENTIFIER_VAR_REF;
         }
         if (resolved instanceof KlangParameterSpec

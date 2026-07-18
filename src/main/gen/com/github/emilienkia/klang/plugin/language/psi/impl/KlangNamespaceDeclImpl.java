@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangNamespaceDeclImpl extends KlangNamedDeclMixin implements KlangNamespaceDecl {
 
-  public KlangNamespaceDeclImpl(@NotNull ASTNode node) {
+  public KlangNamespaceDeclImpl(ASTNode node) {
     super(node);
   }
 

@@ -12,7 +12,7 @@ import com.github.emilienkia.klang.plugin.language.psi.*;
 
 public class KlangParameterSpecImpl extends KlangNamedDeclMixin implements KlangParameterSpec {
 
-  public KlangParameterSpecImpl(@NotNull ASTNode node) {
+  public KlangParameterSpecImpl(ASTNode node) {
     super(node);
   }
 

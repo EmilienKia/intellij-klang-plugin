@@ -48,7 +48,7 @@ are derived.
 - **Functions**: regular, operator overloads, destructors (`~Name`), named return variables, member-initialiser lists, static dependency lists, abstract / redirect / alias bodies, `throws` clauses
 - **Variables**: `name : Type`, with `=`, `( … )` and `{ … }` initialisers
 - **Types**: fundamental types, qualified types, function-reference types, type suffixes — array `[]`, owner `!`, pointer `*`, reference `&`, link `+`, view `?`, drain `#`
-- **Statements**: blocks, `return`, `break`, `if`/`else` (including `if`-condition variable declarations), `while`, `for`, `throw`, `try`/`catch`/`finally`, `using`, variable and expression statements
+- **Statements**: blocks, `return`, `break`, `continue`, `if`/`else` (including `if`-condition variable declarations), `while`, `for`, `foreach` (`for(name : Type = source)` over arrays, `::k::Iterator`/`ConstIterator`, and `Sequence`/`MutableSequence`), `throw`, `try`/`catch`/`finally`, `using`, variable and expression statements
 - **Expressions**: full C-like precedence ladder, casts, `new`/`delete`, postfix (call, index, member access, temporary objects `T{…}` / arrays `T[]{…}`), positional & designated brace-init lists
 - **Literals**: integers (dec/hex/oct/bin with suffixes), floats, characters & strings (with `u8`/`u16`/`u32`/`u`/`U` encoding prefixes and full escape sequences), `true`/`false`, `null`
 

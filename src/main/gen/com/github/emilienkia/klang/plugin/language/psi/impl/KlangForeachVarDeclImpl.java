@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.github.emilienkia.klang.plugin.language.psi.KlangTypes.*;
 import com.github.emilienkia.klang.plugin.language.psi.*;
 
-public class KlangEnumEntryImpl extends KlangNamedDeclMixin implements KlangEnumEntry {
+public class KlangForeachVarDeclImpl extends KlangNamedDeclMixin implements KlangForeachVarDecl {
 
-  public KlangEnumEntryImpl(ASTNode node) {
+  public KlangForeachVarDeclImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull KlangVisitor visitor) {
-    visitor.visitEnumEntry(this);
+    visitor.visitForeachVarDecl(this);
   }
 
   @Override
@@ -27,21 +27,21 @@ public class KlangEnumEntryImpl extends KlangNamedDeclMixin implements KlangEnum
   }
 
   @Override
-  @Nullable
-  public KlangBraceInitList getBraceInitList() {
-    return findChildByClass(KlangBraceInitList.class);
+  @NotNull
+  public List<KlangSpecifier> getSpecifierList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, KlangSpecifier.class);
   }
 
   @Override
-  @Nullable
-  public KlangExpressionList getExpressionList() {
-    return findChildByClass(KlangExpressionList.class);
+  @NotNull
+  public KlangTypeSpec getTypeSpec() {
+    return findNotNullChildByClass(KlangTypeSpec.class);
   }
 
   @Override
-  @Nullable
-  public PsiElement getLitInteger() {
-    return findChildByType(LIT_INTEGER);
+  @NotNull
+  public PsiElement getIdentifier() {
+    return findNotNullChildByType(IDENTIFIER);
   }
 
 }

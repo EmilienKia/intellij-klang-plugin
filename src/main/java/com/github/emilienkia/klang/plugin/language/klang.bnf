@@ -535,8 +535,8 @@ specifier ::= 'public' | 'protected' | 'private'
 
 // ── Type Specifiers ───────────────────────────────────────────────────────────
 
-typeSpec ::= functionRefType
-           | qualifiedIdentifier '::' functionRefType
+typeSpec ::= callableTypeSpec
+           | qualifiedIdentifier '::' memberFnRefType
            | 'const'? (fundamentalTypeSpec | qualifiedIdentifier) typeSuffix*
     { name = "type" }
 
@@ -545,11 +545,18 @@ fundamentalTypeSpec ::= 'unsigned'? ('byte' | 'char' | 'short' | 'int' | 'long'
                       | 'bool'
     { name = "primitive type" }
 
-functionRefType ::= functionRefQualifier '(' typeList? ')'
-    { name = "function reference type" }
+// A callable type: bare prototype or addresser-qualified callable.
+// '!' and '#' addressers are forbidden on callables.
+// '&' addresser is new (reference — non-null, non-rebindable).
+callableTypeSpec ::= 'const'? callableAddresser? '(' typeList? ')' (':' typeSpec)? throwsClause?
+    { name = "callable type" }
 
-functionRefQualifier ::= '*' | '?' | '+'
-    { name = "function reference qualifier (*/?/+)" }
+callableAddresser ::= '*' | '?' | '+' | '&'
+    { name = "callable addresser (*/?/+/&)" }
+
+// Unbound member fn reference: T::*(params):R  — only * ? + allowed, no &, no throwsClause
+memberFnRefType ::= ('*' | '?' | '+') '(' typeList? ')' (':' typeSpec)?
+    { name = "member function reference type" }
 
 typeList ::= typeSpec (',' typeSpec)*
     { name = "type list" }

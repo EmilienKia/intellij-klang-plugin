@@ -682,8 +682,8 @@ Specifier
 (* ---------- Type Specifiers ---------------------------------------------- *)
 
 TypeSpec
-    = FunctionRefType
-    | QualifiedIdentifier , '::' , FunctionRefType               (* member fn ref *)
+    = CallableTypeSpec                                            (* callable — addressed or prototype *)
+    | QualifiedIdentifier , '::' , MemberFnRefType               (* unbound member fn ref *)
     | [ 'const' ] , ( FundamentalTypeSpec | QualifiedIdentifier ) , { TypeSuffix }
     ;
 
@@ -696,12 +696,28 @@ FundamentalTypeSpec
     (* 'char' has no signed/unsigned variant. The 1-byte integer types are      *)
     (* 'byte' (signed) and 'unsigned byte'. 'unsigned char' is not a valid type.*)
 
-FunctionRefType
-    = FunctionRefQualifier , '(' , [ TypeList ] , ')'
+(* A callable type: either a bare prototype (no addresser, only valid as alias/template
+   target) or a prototype qualified by an addresser (* ? + &).
+   K has no 'void' keyword: void return = omitted return type.
+   '!' and '#' addressers are FORBIDDEN on callables.
+   The '&' addresser is NEW compared to the old function-reference types.            *)
+CallableTypeSpec
+    = [ 'const' ] , [ CallableAddresser ] ,
+      '(' , [ TypeList ] , ')' ,
+      [ ':' , TypeSpec ] ,
+      [ ThrowsClause ]
     ;
 
-FunctionRefQualifier
-    = '*' | '?' | '+'
+CallableAddresser
+    = '*'   (* pointer — nullable, rebindable *)
+    | '?'   (* view    — nullable, non-rebindable *)
+    | '+'   (* link    — non-null,  rebindable *)
+    | '&'   (* reference — non-null, non-rebindable *)
+    ;
+
+(* Unbound member function reference: T::*(params):R, T::?(params), T::+(params). *)
+MemberFnRefType
+    = ( '*' | '?' | '+' ) , '(' , [ TypeList ] , ')' , [ ':' , TypeSpec ]
     ;
 
 TypeList

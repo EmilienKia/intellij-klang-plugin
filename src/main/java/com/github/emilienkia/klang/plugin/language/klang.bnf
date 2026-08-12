@@ -737,6 +737,7 @@ postfixOp ::= '++'
 
 primaryExpr ::= literal
               | 'this'
+              | lambdaExpr
               | '(' expression ')'
               | annotationDef
               | braceInitList
@@ -754,6 +755,23 @@ primitiveArrayElementType ::= 'bool' | 'byte' | 'char' | 'short' | 'int' | 'long
 identifierExpr ::= templateQualifiedScopeExpr
                  | qualifiedIdentifier
     { name = "identifier" }
+
+// ── Lambda Expressions ───────────────────────────────────────────────────────
+
+// Lambda expression: [ const ] [ captureList ] ( params ) [ : retType ] { body }
+// Starts with 'const', '[', or '(' — disambiguation from '(expr)':
+// a lambda body is always a blockStatement; if the '{' is absent, GrammarKit
+// backtracks (no pin) and tries '(' expression ')' next.
+lambdaExpr ::= 'const'? captureList? '(' parameterList? ')' (':' typeSpec)? blockStatement
+    { name = "lambda expression" }
+
+captureList ::= '[' ']'
+              | '[' capture (',' capture)* ']'
+    { name = "capture list" }
+
+capture ::= 'const'? '&'? 'this'
+          | 'const'? '&'? IDENTIFIER ('=' conditionalExpr)?
+    { name = "capture" }
 
 // Expression-context Type<T>::member, ns::Type<T>::member, ::ns::Type<T>::member
 templateQualifiedScopeExpr ::= '::'? IDENTIFIER ('::' IDENTIFIER)* templateArgList ('::' IDENTIFIER)+

@@ -978,10 +978,34 @@ PostfixOp
 PrimaryExpr
     = Literal
     | 'this'
+    | LambdaExpr
     | '(' , Expression , ')'
     | AnnotationInitExpr
     | BraceInitList
     | IdentifierExpr
+    ;
+
+(* A lambda expression yields a '&(params):ret' callable.
+   The closure lifetime is the enclosing block (or the aggregate/global, if used in
+   an initialiser). Capture-free lambdas yield {fn, null} with zero closure cost.   *)
+LambdaExpr
+    = [ 'const' ] , [ CaptureList ] , '(' , [ ParameterList ] , ')' ,
+      [ ':' , TypeSpec ] , BlockStatement
+    ;
+    (* 'const' prefix: forces the generated operator() to be const.
+       No CaptureList: implicit capture-all-by-reference.
+       '[]': empty capture list — any reference to an enclosing local is an error.
+       Return type may be omitted and will be deduced.                               *)
+
+CaptureList
+    = '[' , ']'
+    | '[' , Capture , { ',' , Capture } , ']'
+    ;
+
+Capture
+    = [ 'const' ] , [ '&' ] , 'this'
+    | [ 'const' ] , [ '&' ] , Identifier
+    | [ 'const' ] , [ '&' ] , Identifier , '=' , ConditionalExpr   (* init capture *)
     ;
 
 AnnotationInitExpr
@@ -1001,6 +1025,24 @@ TemplateQualifiedScopeExpr
     ;
     (* Expression context supports Type<T>::member, ns::Type<T>::member,
        and ::ns::Type<T>::member forms. *)
+
+(* ---------- Expression-context template-argument disambiguation ---------- *)
+(*                                                                           *)
+(* A PrimaryExpr identifier may carry a TemplateArgList (e.g. Optional<byte>) *)
+(* via QualifiedIdentifier / IdentifierSegment, forming a template-qualified  *)
+(* primary that the following PostfixOp applies to:                          *)
+(*                                                                           *)
+(*     Type<Args> '(' [ ExpressionList ] ')'   -- call / temporary object    *)
+(*     Type<Args> '.'  Identifier              -- member / static access      *)
+(*     Type<Args> '->' Identifier              -- member through pointer      *)
+(*                                                                           *)
+(* Because '<' is ambiguous with the less-than operator, in expression       *)
+(* context the parser tentatively scans a TemplateArgList after a primary    *)
+(* identifier and commits to it ONLY when the matching '>' is immediately     *)
+(* followed by one of '(' , '.' , or '->' .  Otherwise it backtracks and     *)
+(* treats '<' as the relational less-than operator.                          *)
+(* (Static member access itself uses '::', as for non-template types;        *)
+(*  the '.' / '->' forms parse but resolve as ordinary member access.)        *)
 
 (* ---------- Brace Initializer Lists ------------------------------------- *)
 

@@ -27,7 +27,8 @@ public class KlangTokenSets {
             KlangTypes.KW_PUBLIC,     KlangTypes.KW_PROTECTED, KlangTypes.KW_PRIVATE,
             KlangTypes.KW_THIS,       KlangTypes.KW_RETURN,
             KlangTypes.KW_IF,         KlangTypes.KW_ELSE,      KlangTypes.KW_WHILE,
-            KlangTypes.KW_FOR,        KlangTypes.KW_BREAK,      KlangTypes.KW_CONTINUE,
+            KlangTypes.KW_FOR,        KlangTypes.KW_BREAK,
+            KlangTypes.KW_ALIAS,      KlangTypes.KW_TYPEDEF,
             KlangTypes.KW_NEW,        KlangTypes.KW_DELETE,
             KlangTypes.KW_DEFAULT,    KlangTypes.KW_ENUM,      KlangTypes.KW_UNION,
             KlangTypes.KW_OPERATOR,
@@ -50,6 +51,7 @@ public class KlangTokenSets {
             KlangTypes.KW_ANNOTATION, KlangTypes.KW_NAMESPACE, KlangTypes.KW_MODULE,
             KlangTypes.KW_IMPORT,     KlangTypes.KW_USING,     KlangTypes.KW_FRIEND,
             KlangTypes.KW_ENUM,       KlangTypes.KW_UNION,
+            KlangTypes.KW_ALIAS,      KlangTypes.KW_TYPEDEF,
             KlangTypes.KW_TEMPLATE,   KlangTypes.KW_TYPENAME,
             KlangTypes.KW_GENERIC
     );
@@ -61,11 +63,11 @@ public class KlangTokenSets {
             KlangTypes.KW_PUBLIC,    KlangTypes.KW_PROTECTED, KlangTypes.KW_PRIVATE
     );
 
-    /** Control-flow keywords: if else while for break continue return throw try catch finally throws */
+    /** Control-flow keywords: if else while for break return throw try catch finally throws */
     public static final TokenSet KEYWORDS_CONTROL = TokenSet.create(
             KlangTypes.KW_IF,     KlangTypes.KW_ELSE,
             KlangTypes.KW_WHILE,  KlangTypes.KW_FOR,
-            KlangTypes.KW_BREAK,  KlangTypes.KW_CONTINUE,  KlangTypes.KW_RETURN,
+            KlangTypes.KW_BREAK,  KlangTypes.KW_RETURN,
             KlangTypes.KW_THROW,  KlangTypes.KW_THROWS,
             KlangTypes.KW_TRY,    KlangTypes.KW_CATCH,    KlangTypes.KW_FINALLY
     );

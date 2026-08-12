@@ -42,6 +42,12 @@
     implements("variableDecl")   = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
     mixin("variableDecl")        = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
 
+    implements("softAliasDecl")  = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("softAliasDecl")       = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
+    implements("typedefDecl")    = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("typedefDecl")         = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
     // Phase 0 — promote every remaining named entity to a navigation target.
     // The declared name is the first direct IDENTIFIER child, so the generic
     // KlangNamedDeclMixin works for all of them (namespaceDecl and parameterSpec
@@ -133,7 +139,8 @@
         KW_WHILE            = "while"
         KW_FOR              = "for"
         KW_BREAK            = "break"
-        KW_CONTINUE         = "continue"
+        KW_ALIAS            = "alias"
+        KW_TYPEDEF          = "typedef"
         KW_NEW              = "new"
         KW_DELETE           = "delete"
         KW_DEFAULT          = "default"
@@ -286,6 +293,7 @@ templateArg ::= typeSpec | conditionalExpr
 declaration ::= visibilityDecl
               | namespaceDecl
               | usingDecl
+              | aliasDecl
               | friendDecl
               | aggregateDecl
               | enumDecl
@@ -307,7 +315,7 @@ private declarationRecover ::= !declarationFirst
 private declarationFirst ::= '}'
     | 'public' | 'protected' | 'private'
     | 'static' | 'const' | 'abstract' | 'final' | 'override' | 'default'
-    | 'namespace' | 'using' | 'friend'
+    | 'namespace' | 'using' | 'friend' | 'alias' | 'typedef'
     | 'struct' | 'class' | 'interface' | 'annotation'
     | 'enum' | 'union'
     | 'template' | 'generic' | 'operator'
@@ -501,6 +509,19 @@ parameterSpec ::= annotationDef* specifier* (IDENTIFIER '...'? ':')? typeSpec ('
 variableDecl ::= specifier* IDENTIFIER ':' typeSpec initialiser? ';'
     { name = "variable declaration" }
 
+// ── Alias / Typedef declarations ─────────────────────────────────────────────
+
+aliasDecl ::= softAliasDecl | typedefDecl
+    { name = "alias/typedef declaration" }
+
+softAliasDecl ::= specifier* (templateDeclaration | genericDeclaration)? 'alias' IDENTIFIER ':' typeSpec ';'
+    { name = "alias declaration"
+      pin = 3 }
+
+typedefDecl ::= specifier* (templateDeclaration | genericDeclaration)? 'typedef' IDENTIFIER ':' typeSpec ';'
+    { name = "typedef declaration"
+      pin = 3 }
+
 initialiser ::= '=' conditionalExpr
               | '(' expressionList? ')' ('[' conditionalExpr ']')?
               | braceInitList
@@ -547,7 +568,6 @@ typeSuffix ::= '[' LIT_INTEGER? ']'
 statement ::= blockStatement
             | returnStatement
             | breakStatement
-            | continueStatement
             | ifElseStatement
             | whileStatement
             | foreachStatement
@@ -555,6 +575,7 @@ statement ::= blockStatement
             | throwStatement
             | tryCatchStatement
             | usingDecl
+            | aliasDecl
             | variableDecl
             | expressionStatement
     { name = "statement" }
@@ -567,9 +588,6 @@ returnStatement ::= 'return' expression? ';'
 
 breakStatement ::= 'break' ';'
     { name = "break statement" }
-
-continueStatement ::= 'continue' ';'
-    { name = "continue statement" }
 
 ifElseStatement ::= 'if' '(' expression ')' statement ('else' statement)?
                   | 'if' '(' ifCondVarDecl ')' statement ('else' statement)?

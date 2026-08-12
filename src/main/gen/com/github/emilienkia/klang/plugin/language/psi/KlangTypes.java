@@ -121,6 +121,7 @@ public interface KlangTypes {
   IElementType KW_ABSTRACT = new KlangTokenType("abstract");
   IElementType KW_ANNOTATION = new KlangTokenType("annotation");
   IElementType KW_BOOL = new KlangTokenType("bool");
+  IElementType KW_ALIAS = new KlangTokenType("alias");
   IElementType KW_BREAK = new KlangTokenType("break");
   IElementType KW_BYTE = new KlangTokenType("byte");
   IElementType KW_CATCH = new KlangTokenType("catch");
@@ -147,6 +148,7 @@ public interface KlangTypes {
   IElementType KW_MODULE = new KlangTokenType("module");
   IElementType KW_NAMESPACE = new KlangTokenType("namespace");
   IElementType KW_NEW = new KlangTokenType("new");
+  IElementType KW_TYPEDEF = new KlangTokenType("typedef");
   IElementType KW_OPERATOR = new KlangTokenType("operator");
   IElementType KW_OVERRIDE = new KlangTokenType("override");
   IElementType KW_PRIVATE = new KlangTokenType("private");

@@ -170,8 +170,9 @@ Keyword
     | 'static' | 'const'   | 'abstract'  | 'final'  | 'override'
     | 'public' | 'protected' | 'private'
     | 'this'   | 'return'
-    | 'if'     | 'else'    | 'while'     | 'for'    | 'break'   | 'continue'
+    | 'if'     | 'else'    | 'while'     | 'for'    | 'break'
     | 'new'    | 'delete'  | 'default'   | 'enum'   | 'union'
+    | 'alias'  | 'typedef'
     | 'operator'
     | 'template' | 'typename' | 'generic'
     | 'throw'  | 'try'     | 'catch'     | 'throws'  | 'finally'
@@ -388,6 +389,7 @@ Declaration
     = VisibilityDecl
     | NamespaceDecl
     | UsingDecl
+    | AliasDecl
     | FriendDecl
     | AggregateDecl
     | UnionDecl
@@ -643,6 +645,27 @@ VariableDecl
     = { Specifier } , Identifier , ':' , TypeSpec , [ Initialiser ] , ';'
     ;
 
+AliasDecl
+    = SoftAliasDecl | TypedefDecl
+    ;
+
+SoftAliasDecl
+    = { Specifier } , [ TemplateDeclaration ] , 'alias' , Identifier , ':' , TypeSpec , ';'
+    ;
+    (* 'alias' is a soft alias — a pure convenience renaming of a type, a
+       callable or a value.  The alias name and the aliased symbol are
+       interchangeable in both directions.  Namespaces cannot be aliased this
+       way; use UsingDecl.  Both forms are also accepted as a Statement; in
+       that case visibility specifiers are rejected.                         *)
+
+TypedefDecl
+    = { Specifier } , [ TemplateDeclaration ] , 'typedef' , Identifier , ':' , TypeSpec , ';'
+    ;
+    (* 'typedef' is a strong alias — it introduces a nominally distinct type
+       over an identical representation.  Conversion from the typedef to its
+       underlying type requires an explicit cast, except within an expression
+       already involving the typedef.                                        *)
+
 Initialiser
     = '=' , ConditionalExpr
     | '(' , [ ExpressionList ] , ')' , [ '[' , ConditionalExpr , ']' ]
@@ -701,13 +724,13 @@ Statement
     = BlockStatement
     | ReturnStatement
     | BreakStatement
-    | ContinueStatement
     | IfElseStatement
     | WhileStatement
     | ForStatement
     | ThrowStatement
     | TryCatchStatement
     | UsingDecl
+    | AliasDecl
     | VariableDecl
     | ExpressionStatement
     ;
@@ -722,10 +745,6 @@ ReturnStatement
 
 BreakStatement
     = 'break' , ';'
-    ;
-
-ContinueStatement
-    = 'continue' , ';'
     ;
 
 IfElseStatement

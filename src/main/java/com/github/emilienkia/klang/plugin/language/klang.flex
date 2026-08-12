@@ -133,7 +133,8 @@ LIT_STRING              = {ENC_PREFIX}? "\"" ( {ESCAPE_SEQ} | [^\"\\] )* "\""
     "while"                     { return KlangTypes.KW_WHILE; }
     "for"                       { return KlangTypes.KW_FOR; }
     "break"                     { return KlangTypes.KW_BREAK; }
-    "continue"                  { return KlangTypes.KW_CONTINUE; }
+    "alias"                     { return KlangTypes.KW_ALIAS; }
+    "typedef"                   { return KlangTypes.KW_TYPEDEF; }
     "new"                       { return KlangTypes.KW_NEW; }
     "delete"                    { return KlangTypes.KW_DELETE; }
     "default"                   { return KlangTypes.KW_DEFAULT; }

@@ -559,7 +559,12 @@ DestructorHead
 OperatorFunctionHead
     = 'operator' , OperatorSymbol
     | 'operator' , '[' , ']'                                     (* subscript operator *)
+    | 'operator' , '(' , ')' , '('                               (* call operator — see disambiguation note *)
     ;
+    (* Disambiguation between call operator and cast/conversion operator:
+       'operator' '(' ')' followed by '(' → call operator (OperatorFunctionHead)
+       'operator' '(' ')' followed by ':' | '->' | ';' | 'throws' → conversion operator (CastOperatorFunctionHead)
+       The lookahead of one token after the closing ')' is sufficient.              *)
 
 CastOperatorFunctionHead
     = 'operator' , '(' , ')'                                     (* casting / conversion operator *)

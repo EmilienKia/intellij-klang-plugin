@@ -436,6 +436,7 @@ destructorHead ::= '~' IDENTIFIER
 
 operatorFunctionHead ::= 'operator' operatorSymbol
                        | 'operator' '[' ']'
+                       | 'operator' '(' ')'   // call operator — tried before castOperatorFunctionHead in functionDecl
     { name = "operator function name" }
 
 // Cast / conversion operator: 'operator ()'. Kept separate from operatorFunctionHead

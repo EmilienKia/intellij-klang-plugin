@@ -35,6 +35,12 @@ public class KlangDeclarationImpl extends ASTWrapperPsiElement implements KlangD
 
   @Override
   @Nullable
+  public KlangAliasDecl getAliasDecl() {
+    return findChildByClass(KlangAliasDecl.class);
+  }
+
+  @Override
+  @Nullable
   public KlangEnumDecl getEnumDecl() {
     return findChildByClass(KlangEnumDecl.class);
   }

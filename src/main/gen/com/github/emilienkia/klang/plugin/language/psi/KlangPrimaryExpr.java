@@ -20,6 +20,9 @@ public interface KlangPrimaryExpr extends PsiElement {
   KlangIdentifierExpr getIdentifierExpr();
 
   @Nullable
+  KlangLambdaExpr getLambdaExpr();
+
+  @Nullable
   KlangLiteral getLiteral();
 
   @Nullable

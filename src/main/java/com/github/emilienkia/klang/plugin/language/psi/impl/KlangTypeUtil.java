@@ -149,7 +149,13 @@ public final class KlangTypeUtil {
         } else if (primary.getIdentifierExpr() != null) {
             PsiElement decl = firstResolved(primary.getIdentifierExpr());
             if (decl instanceof KlangFunctionDecl fn) pendingCallable = fn;
-            else if (decl != null) { curTs = typeSpecOf(decl); cur = nominalTypeOfTypeSpec(curTs, decl); }
+            else if (decl != null) {
+                curTs = typeSpecOf(decl);
+                cur = nominalTypeOfTypeSpec(curTs, decl);
+                if (cur == null && decl instanceof KlangCapture c && c.getConditionalExpr() != null) {
+                    cur = aggregateOfExpression(c.getConditionalExpr());
+                }
+            }
         }
 
         for (int i = 0; i < uptoExclusive && i < ops.size(); i++) {
@@ -233,6 +239,12 @@ public final class KlangTypeUtil {
         for (PsiElement el : KlangResolveUtil.resolve(anchor, qid.getText().trim())) {
             if (el instanceof KlangAggregateDecl agg) return agg;
             if (el instanceof KlangUnionDecl union) return union;
+            if (el instanceof KlangSoftAliasDecl softAlias) {
+                return nominalTypeOfTypeSpec(softAlias.getTypeSpec(), softAlias);
+            }
+            if (el instanceof KlangTypedefDecl typedefDecl) {
+                return nominalTypeOfTypeSpec(typedefDecl.getTypeSpec(), typedefDecl);
+            }
             // A type name may resolve to a *constructor* rather than the type itself when the
             // lexical climb passes through the aggregate's own scope: constructors are member
             // functions that share the aggregate's simple name (e.g. `Shared()` inside
@@ -258,6 +270,8 @@ public final class KlangTypeUtil {
         if (decl instanceof KlangForeachVarDecl c)      return c.getTypeSpec();
         if (decl instanceof KlangCatchParameterDecl c)  return c.getTypeSpec();
         if (decl instanceof KlangUnionMemberDecl u)     return u.getTypeSpec();
+        if (decl instanceof KlangSoftAliasDecl s)       return s.getTypeSpec();
+        if (decl instanceof KlangTypedefDecl t)         return t.getTypeSpec();
         return null;
     }
 
@@ -320,14 +334,35 @@ public final class KlangTypeUtil {
             return m.isEmpty() ? null : m.get(0);
         }
         if (container instanceof KlangUnionDecl union) {
-            return KlangResolveUtil.resolveUnionMember(union, name);
+            PsiElement member = KlangResolveUtil.resolveUnionMember(union, name);
+            if (member != null) return member;
+            // Polymorphic union: check base class/interface if present
+            KlangQualifiedIdentifier baseQid = union.getQualifiedIdentifier();
+            if (baseQid != null) {
+                for (PsiElement base : KlangResolveUtil.resolve(union, baseQid.getText().trim())) {
+                    if (base instanceof KlangAggregateDecl baseAgg) {
+                        List<PsiElement> baseMembers = KlangResolveUtil.resolveMember(baseAgg, name, anchor);
+                        if (!baseMembers.isEmpty()) return baseMembers.get(0);
+                    }
+                }
+            }
+            return null;
         }
         return null;
     }
 
     /** Narrows a nominal type to a {@link KlangAggregateDecl}, or {@code null} (e.g. a union). */
     private static @Nullable KlangAggregateDecl asAggregate(@Nullable PsiElement nominal) {
-        return nominal instanceof KlangAggregateDecl agg ? agg : null;
+        if (nominal instanceof KlangAggregateDecl agg) return agg;
+        if (nominal instanceof KlangUnionDecl union) {
+            KlangQualifiedIdentifier baseQid = union.getQualifiedIdentifier();
+            if (baseQid != null) {
+                for (PsiElement el : KlangResolveUtil.resolve(union, baseQid.getText().trim())) {
+                    if (el instanceof KlangAggregateDecl agg) return agg;
+                }
+            }
+        }
+        return null;
     }
 
     private static boolean isThis(@NotNull KlangPrimaryExpr primary) {

@@ -1,5 +1,6 @@
 package com.github.emilienkia.klang.plugin.language;
 import com.github.emilienkia.klang.plugin.language.psi.KlangAggregateDecl;
+import com.github.emilienkia.klang.plugin.language.psi.KlangCapture;
 import com.github.emilienkia.klang.plugin.language.psi.KlangCatchParameterDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangEnumDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangEnumEntry;
@@ -12,7 +13,9 @@ import com.github.emilienkia.klang.plugin.language.psi.KlangNamedReturnVar;
 import com.github.emilienkia.klang.plugin.language.psi.KlangNamespaceDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangParameterSpec;
 import com.github.emilienkia.klang.plugin.language.psi.KlangQualifiedIdentifier;
+import com.github.emilienkia.klang.plugin.language.psi.KlangSoftAliasDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangTemplateParameter;
+import com.github.emilienkia.klang.plugin.language.psi.KlangTypedefDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangUnionDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangUnionMemberDecl;
 import com.github.emilienkia.klang.plugin.language.psi.KlangVariableDecl;
@@ -92,7 +95,8 @@ public class KlangSemanticHighlighter implements Annotator {
         if (resolved instanceof KlangVariableDecl
                 || resolved instanceof KlangNamedReturnVar
                 || resolved instanceof KlangIfCondVarDecl
-                || resolved instanceof KlangForeachVarDecl) {
+                || resolved instanceof KlangForeachVarDecl
+                || resolved instanceof KlangCapture) {
             return KlangSyntaxHighlighter.IDENTIFIER_VAR_REF;
         }
         if (resolved instanceof KlangParameterSpec
@@ -101,7 +105,9 @@ public class KlangSemanticHighlighter implements Annotator {
         }
         if (resolved instanceof KlangAggregateDecl
                 || resolved instanceof KlangEnumDecl
-                || resolved instanceof KlangUnionDecl) {
+                || resolved instanceof KlangUnionDecl
+                || resolved instanceof KlangSoftAliasDecl
+                || resolved instanceof KlangTypedefDecl) {
             return KlangSyntaxHighlighter.IDENTIFIER_TYPE_REF;
         }
         if (resolved instanceof KlangTemplateParameter) {

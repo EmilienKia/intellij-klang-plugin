@@ -10,6 +10,7 @@ public interface KlangTypes {
 
   IElementType ADDITIVE_EXPR = new KlangElementType("ADDITIVE_EXPR");
   IElementType AGGREGATE_DECL = new KlangElementType("AGGREGATE_DECL");
+  IElementType ALIAS_DECL = new KlangElementType("ALIAS_DECL");
   IElementType ANNOTATION_DEF = new KlangElementType("ANNOTATION_DEF");
   IElementType ASSIGNMENT_EXPR = new KlangElementType("ASSIGNMENT_EXPR");
   IElementType ASSIGNMENT_OPERATOR = new KlangElementType("ASSIGNMENT_OPERATOR");
@@ -19,6 +20,10 @@ public interface KlangTypes {
   IElementType BLOCK_STATEMENT = new KlangElementType("BLOCK_STATEMENT");
   IElementType BRACE_INIT_LIST = new KlangElementType("BRACE_INIT_LIST");
   IElementType BREAK_STATEMENT = new KlangElementType("BREAK_STATEMENT");
+  IElementType CALLABLE_ADDRESSER = new KlangElementType("CALLABLE_ADDRESSER");
+  IElementType CALLABLE_TYPE_SPEC = new KlangElementType("CALLABLE_TYPE_SPEC");
+  IElementType CAPTURE = new KlangElementType("CAPTURE");
+  IElementType CAPTURE_LIST = new KlangElementType("CAPTURE_LIST");
   IElementType CAST_EXPR = new KlangElementType("CAST_EXPR");
   IElementType CAST_OPERATOR_FUNCTION_HEAD = new KlangElementType("CAST_OPERATOR_FUNCTION_HEAD");
   IElementType CATCH_CLAUSE = new KlangElementType("CATCH_CLAUSE");
@@ -46,8 +51,6 @@ public interface KlangTypes {
   IElementType FUNCTION_BODY = new KlangElementType("FUNCTION_BODY");
   IElementType FUNCTION_DECL = new KlangElementType("FUNCTION_DECL");
   IElementType FUNCTION_HEAD = new KlangElementType("FUNCTION_HEAD");
-  IElementType FUNCTION_REF_QUALIFIER = new KlangElementType("FUNCTION_REF_QUALIFIER");
-  IElementType FUNCTION_REF_TYPE = new KlangElementType("FUNCTION_REF_TYPE");
   IElementType FUNDAMENTAL_TYPE_SPEC = new KlangElementType("FUNDAMENTAL_TYPE_SPEC");
   IElementType GENERIC_DECLARATION = new KlangElementType("GENERIC_DECLARATION");
   IElementType IDENTIFIER_EXPR = new KlangElementType("IDENTIFIER_EXPR");
@@ -59,9 +62,11 @@ public interface KlangTypes {
   IElementType INCLUSIVE_BIN_OR_EXPR = new KlangElementType("INCLUSIVE_BIN_OR_EXPR");
   IElementType INITIALISER = new KlangElementType("INITIALISER");
   IElementType INIT_ELEMENT = new KlangElementType("INIT_ELEMENT");
+  IElementType LAMBDA_EXPR = new KlangElementType("LAMBDA_EXPR");
   IElementType LITERAL = new KlangElementType("LITERAL");
   IElementType LOGICAL_AND_EXPR = new KlangElementType("LOGICAL_AND_EXPR");
   IElementType LOGICAL_OR_EXPR = new KlangElementType("LOGICAL_OR_EXPR");
+  IElementType MEMBER_FN_REF_TYPE = new KlangElementType("MEMBER_FN_REF_TYPE");
   IElementType MEMBER_INIT = new KlangElementType("MEMBER_INIT");
   IElementType MEMBER_INIT_LIST = new KlangElementType("MEMBER_INIT_LIST");
   IElementType MODULE_DECLARATION = new KlangElementType("MODULE_DECLARATION");
@@ -84,6 +89,7 @@ public interface KlangTypes {
   IElementType RETURN_STATEMENT = new KlangElementType("RETURN_STATEMENT");
   IElementType RETURN_TYPE_OR_MEMBER_INIT_LIST = new KlangElementType("RETURN_TYPE_OR_MEMBER_INIT_LIST");
   IElementType SHIFTING_EXPR = new KlangElementType("SHIFTING_EXPR");
+  IElementType SOFT_ALIAS_DECL = new KlangElementType("SOFT_ALIAS_DECL");
   IElementType SPACESHIP_EXPR = new KlangElementType("SPACESHIP_EXPR");
   IElementType SPECIFIER = new KlangElementType("SPECIFIER");
   IElementType STATEMENT = new KlangElementType("STATEMENT");
@@ -99,6 +105,7 @@ public interface KlangTypes {
   IElementType THROWS_CLAUSE = new KlangElementType("THROWS_CLAUSE");
   IElementType THROW_STATEMENT = new KlangElementType("THROW_STATEMENT");
   IElementType TRY_CATCH_STATEMENT = new KlangElementType("TRY_CATCH_STATEMENT");
+  IElementType TYPEDEF_DECL = new KlangElementType("TYPEDEF_DECL");
   IElementType TYPE_LIST = new KlangElementType("TYPE_LIST");
   IElementType TYPE_NAME = new KlangElementType("TYPE_NAME");
   IElementType TYPE_SPEC = new KlangElementType("TYPE_SPEC");
@@ -119,9 +126,9 @@ public interface KlangTypes {
   IElementType IDENTIFIER = new KlangTokenType("IDENTIFIER");
   IElementType INITELEMENT_1_0 = new KlangTokenType("initElement_1_0");
   IElementType KW_ABSTRACT = new KlangTokenType("abstract");
+  IElementType KW_ALIAS = new KlangTokenType("alias");
   IElementType KW_ANNOTATION = new KlangTokenType("annotation");
   IElementType KW_BOOL = new KlangTokenType("bool");
-  IElementType KW_ALIAS = new KlangTokenType("alias");
   IElementType KW_BREAK = new KlangTokenType("break");
   IElementType KW_BYTE = new KlangTokenType("byte");
   IElementType KW_CATCH = new KlangTokenType("catch");
@@ -148,7 +155,6 @@ public interface KlangTypes {
   IElementType KW_MODULE = new KlangTokenType("module");
   IElementType KW_NAMESPACE = new KlangTokenType("namespace");
   IElementType KW_NEW = new KlangTokenType("new");
-  IElementType KW_TYPEDEF = new KlangTokenType("typedef");
   IElementType KW_OPERATOR = new KlangTokenType("operator");
   IElementType KW_OVERRIDE = new KlangTokenType("override");
   IElementType KW_PRIVATE = new KlangTokenType("private");
@@ -163,6 +169,7 @@ public interface KlangTypes {
   IElementType KW_THROW = new KlangTokenType("throw");
   IElementType KW_THROWS = new KlangTokenType("throws");
   IElementType KW_TRY = new KlangTokenType("try");
+  IElementType KW_TYPEDEF = new KlangTokenType("typedef");
   IElementType KW_TYPENAME = new KlangTokenType("typename");
   IElementType KW_UNION = new KlangTokenType("union");
   IElementType KW_UNSIGNED = new KlangTokenType("unsigned");
@@ -241,6 +248,9 @@ public interface KlangTypes {
       else if (type == AGGREGATE_DECL) {
         return new KlangAggregateDeclImpl(node);
       }
+      else if (type == ALIAS_DECL) {
+        return new KlangAliasDeclImpl(node);
+      }
       else if (type == ANNOTATION_DEF) {
         return new KlangAnnotationDefImpl(node);
       }
@@ -267,6 +277,18 @@ public interface KlangTypes {
       }
       else if (type == BREAK_STATEMENT) {
         return new KlangBreakStatementImpl(node);
+      }
+      else if (type == CALLABLE_ADDRESSER) {
+        return new KlangCallableAddresserImpl(node);
+      }
+      else if (type == CALLABLE_TYPE_SPEC) {
+        return new KlangCallableTypeSpecImpl(node);
+      }
+      else if (type == CAPTURE) {
+        return new KlangCaptureImpl(node);
+      }
+      else if (type == CAPTURE_LIST) {
+        return new KlangCaptureListImpl(node);
       }
       else if (type == CAST_EXPR) {
         return new KlangCastExprImpl(node);
@@ -349,12 +371,6 @@ public interface KlangTypes {
       else if (type == FUNCTION_HEAD) {
         return new KlangFunctionHeadImpl(node);
       }
-      else if (type == FUNCTION_REF_QUALIFIER) {
-        return new KlangFunctionRefQualifierImpl(node);
-      }
-      else if (type == FUNCTION_REF_TYPE) {
-        return new KlangFunctionRefTypeImpl(node);
-      }
       else if (type == FUNDAMENTAL_TYPE_SPEC) {
         return new KlangFundamentalTypeSpecImpl(node);
       }
@@ -388,6 +404,9 @@ public interface KlangTypes {
       else if (type == INIT_ELEMENT) {
         return new KlangInitElementImpl(node);
       }
+      else if (type == LAMBDA_EXPR) {
+        return new KlangLambdaExprImpl(node);
+      }
       else if (type == LITERAL) {
         return new KlangLiteralImpl(node);
       }
@@ -396,6 +415,9 @@ public interface KlangTypes {
       }
       else if (type == LOGICAL_OR_EXPR) {
         return new KlangLogicalOrExprImpl(node);
+      }
+      else if (type == MEMBER_FN_REF_TYPE) {
+        return new KlangMemberFnRefTypeImpl(node);
       }
       else if (type == MEMBER_INIT) {
         return new KlangMemberInitImpl(node);
@@ -463,6 +485,9 @@ public interface KlangTypes {
       else if (type == SHIFTING_EXPR) {
         return new KlangShiftingExprImpl(node);
       }
+      else if (type == SOFT_ALIAS_DECL) {
+        return new KlangSoftAliasDeclImpl(node);
+      }
       else if (type == SPACESHIP_EXPR) {
         return new KlangSpaceshipExprImpl(node);
       }
@@ -507,6 +532,9 @@ public interface KlangTypes {
       }
       else if (type == TRY_CATCH_STATEMENT) {
         return new KlangTryCatchStatementImpl(node);
+      }
+      else if (type == TYPEDEF_DECL) {
+        return new KlangTypedefDeclImpl(node);
       }
       else if (type == TYPE_LIST) {
         return new KlangTypeListImpl(node);

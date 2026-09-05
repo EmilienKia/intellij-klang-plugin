@@ -53,6 +53,12 @@ public class KlangPrimaryExprImpl extends ASTWrapperPsiElement implements KlangP
 
   @Override
   @Nullable
+  public KlangLambdaExpr getLambdaExpr() {
+    return findChildByClass(KlangLambdaExpr.class);
+  }
+
+  @Override
+  @Nullable
   public KlangLiteral getLiteral() {
     return findChildByClass(KlangLiteral.class);
   }

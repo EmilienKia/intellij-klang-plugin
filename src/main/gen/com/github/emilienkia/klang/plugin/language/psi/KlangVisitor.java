@@ -15,6 +15,10 @@ public class KlangVisitor extends PsiElementVisitor {
     visitNamedElement(o);
   }
 
+  public void visitAliasDecl(@NotNull KlangAliasDecl o) {
+    visitPsiElement(o);
+  }
+
   public void visitAnnotationDef(@NotNull KlangAnnotationDef o) {
     visitPsiElement(o);
   }
@@ -48,6 +52,22 @@ public class KlangVisitor extends PsiElementVisitor {
   }
 
   public void visitBreakStatement(@NotNull KlangBreakStatement o) {
+    visitPsiElement(o);
+  }
+
+  public void visitCallableAddresser(@NotNull KlangCallableAddresser o) {
+    visitPsiElement(o);
+  }
+
+  public void visitCallableTypeSpec(@NotNull KlangCallableTypeSpec o) {
+    visitPsiElement(o);
+  }
+
+  public void visitCapture(@NotNull KlangCapture o) {
+    visitNamedElement(o);
+  }
+
+  public void visitCaptureList(@NotNull KlangCaptureList o) {
     visitPsiElement(o);
   }
 
@@ -159,14 +179,6 @@ public class KlangVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitFunctionRefQualifier(@NotNull KlangFunctionRefQualifier o) {
-    visitPsiElement(o);
-  }
-
-  public void visitFunctionRefType(@NotNull KlangFunctionRefType o) {
-    visitPsiElement(o);
-  }
-
   public void visitFundamentalTypeSpec(@NotNull KlangFundamentalTypeSpec o) {
     visitPsiElement(o);
   }
@@ -211,6 +223,10 @@ public class KlangVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitLambdaExpr(@NotNull KlangLambdaExpr o) {
+    visitPsiElement(o);
+  }
+
   public void visitLiteral(@NotNull KlangLiteral o) {
     visitPsiElement(o);
   }
@@ -220,6 +236,10 @@ public class KlangVisitor extends PsiElementVisitor {
   }
 
   public void visitLogicalOrExpr(@NotNull KlangLogicalOrExpr o) {
+    visitPsiElement(o);
+  }
+
+  public void visitMemberFnRefType(@NotNull KlangMemberFnRefType o) {
     visitPsiElement(o);
   }
 
@@ -311,6 +331,10 @@ public class KlangVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitSoftAliasDecl(@NotNull KlangSoftAliasDecl o) {
+    visitNamedElement(o);
+  }
+
   public void visitSpaceshipExpr(@NotNull KlangSpaceshipExpr o) {
     visitPsiElement(o);
   }
@@ -389,6 +413,10 @@ public class KlangVisitor extends PsiElementVisitor {
 
   public void visitTypeSuffix(@NotNull KlangTypeSuffix o) {
     visitPsiElement(o);
+  }
+
+  public void visitTypedefDecl(@NotNull KlangTypedefDecl o) {
+    visitNamedElement(o);
   }
 
   public void visitUnaryExpr(@NotNull KlangUnaryExpr o) {

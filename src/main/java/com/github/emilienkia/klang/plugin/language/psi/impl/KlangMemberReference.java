@@ -1,6 +1,7 @@
 package com.github.emilienkia.klang.plugin.language.psi.impl;
 
 import com.github.emilienkia.klang.plugin.language.psi.KlangAggregateDecl;
+import com.github.emilienkia.klang.plugin.language.psi.KlangQualifiedIdentifier;
 import com.github.emilienkia.klang.plugin.language.psi.KlangUnionDecl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -49,9 +50,23 @@ public class KlangMemberReference extends PsiReferenceBase.Poly<PsiElement>
             }
         } else if (receiver instanceof KlangUnionDecl union) {
             // Union value member access (e.g. _storage.result) — resolve against the union's
-            // declared alternatives. Unions have no methods or unified-call syntax.
+            // declared alternatives, or if not found, against its polymorphic base class/interface.
             PsiElement member = KlangResolveUtil.resolveUnionMember(union, name);
-            if (member != null) found.add(member);
+            if (member != null) {
+                found.add(member);
+            } else {
+                KlangQualifiedIdentifier baseQid = union.getQualifiedIdentifier();
+                if (baseQid != null) {
+                    for (PsiElement base : KlangResolveUtil.resolve(union, baseQid.getText().trim())) {
+                        if (base instanceof KlangAggregateDecl baseAgg) {
+                            found.addAll(KlangResolveUtil.resolveMember(baseAgg, name, myElement));
+                            if (found.isEmpty()) {
+                                found.addAll(KlangResolveUtil.resolveUnifiedCall(name, baseAgg, myElement));
+                            }
+                        }
+                    }
+                }
+            }
         }
         return found.stream().map(PsiElementResolveResult::new).toArray(ResolveResult[]::new);
     }

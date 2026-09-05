@@ -11,6 +11,9 @@ public interface KlangDeclaration extends PsiElement {
   KlangAggregateDecl getAggregateDecl();
 
   @Nullable
+  KlangAliasDecl getAliasDecl();
+
+  @Nullable
   KlangEnumDecl getEnumDecl();
 
   @Nullable

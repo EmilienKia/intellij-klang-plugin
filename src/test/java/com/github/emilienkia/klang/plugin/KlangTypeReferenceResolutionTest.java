@@ -249,7 +249,7 @@ class KlangTypeReferenceResolutionTest extends KlangFixtureTestBase {
             PsiElement target = resolveAtCaret("""
                     module demo;
                     target() : int { return 1; }
-                    alias() : int -> tar<caret>get;
+                    forward() : int -> tar<caret>get;
                     """);
             assertThat(target).isInstanceOf(KlangFunctionDecl.class);
             assertThat(((KlangNamedElement) target).getName()).isEqualTo("target");

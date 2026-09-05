@@ -144,5 +144,87 @@ class KlangReferenceResolutionTest extends KlangFixtureTestBase {
             assertThat(((KlangNamedElement) target).getName()).isEqualTo("count");
         });
     }
+
+    @Test
+    void aliasReferenceResolvesToSoftAliasDecl() {
+        onEdt(() -> {
+            PsiElement target = resolveAtCaret("""
+                    module demo;
+                    alias MyInt : int;
+                    main() : int {
+                        x: My<caret>Int = 42;
+                        return x;
+                    }
+                    """);
+            assertThat(target).isInstanceOf(KlangSoftAliasDecl.class);
+            assertThat(((KlangNamedElement) target).getName()).isEqualTo("MyInt");
+        });
+    }
+
+    @Test
+    void typedefReferenceResolvesToTypedefDecl() {
+        onEdt(() -> {
+            PsiElement target = resolveAtCaret("""
+                    module demo;
+                    typedef Distance : float;
+                    main() : int {
+                        d: Dis<caret>tance = 10.0f;
+                        return 0;
+                    }
+                    """);
+            assertThat(target).isInstanceOf(KlangTypedefDecl.class);
+            assertThat(((KlangNamedElement) target).getName()).isEqualTo("Distance");
+        });
+    }
+
+    @Test
+    void blockLocalAliasResolves() {
+        onEdt(() -> {
+            PsiElement target = resolveAtCaret("""
+                    module demo;
+                    main() : int {
+                        alias LocalAlias : int;
+                        x: Local<caret>Alias = 1;
+                        return x;
+                    }
+                    """);
+            assertThat(target).isInstanceOf(KlangSoftAliasDecl.class);
+            assertThat(((KlangNamedElement) target).getName()).isEqualTo("LocalAlias");
+        });
+    }
+
+    @Test
+    void lambdaParameterReferenceResolves() {
+        onEdt(() -> {
+            PsiElement target = resolveAtCaret("""
+                    module demo;
+                    main() : int {
+                        f = (val: int) : int {
+                            return <caret>val * 2;
+                        };
+                        return 0;
+                    }
+                    """);
+            assertThat(target).isInstanceOf(KlangParameterSpec.class);
+            assertThat(((KlangNamedElement) target).getName()).isEqualTo("val");
+        });
+    }
+
+    @Test
+    void lambdaCaptureReferenceResolves() {
+        onEdt(() -> {
+            PsiElement target = resolveAtCaret("""
+                    module demo;
+                    main() : int {
+                        f = [bonus = 5] (val: int) : int {
+                            return val + <caret>bonus;
+                        };
+                        return 0;
+                    }
+                    """);
+            assertThat(target).isInstanceOf(KlangCapture.class);
+            assertThat(((KlangNamedElement) target).getName()).isEqualTo("bonus");
+        });
+    }
 }
 

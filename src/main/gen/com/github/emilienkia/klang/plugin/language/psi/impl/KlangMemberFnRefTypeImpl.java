@@ -11,14 +11,14 @@ import static com.github.emilienkia.klang.plugin.language.psi.KlangTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.github.emilienkia.klang.plugin.language.psi.*;
 
-public class KlangFunctionRefTypeImpl extends ASTWrapperPsiElement implements KlangFunctionRefType {
+public class KlangMemberFnRefTypeImpl extends ASTWrapperPsiElement implements KlangMemberFnRefType {
 
-  public KlangFunctionRefTypeImpl(@NotNull ASTNode node) {
+  public KlangMemberFnRefTypeImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull KlangVisitor visitor) {
-    visitor.visitFunctionRefType(this);
+    visitor.visitMemberFnRefType(this);
   }
 
   @Override
@@ -28,15 +28,15 @@ public class KlangFunctionRefTypeImpl extends ASTWrapperPsiElement implements Kl
   }
 
   @Override
-  @NotNull
-  public KlangFunctionRefQualifier getFunctionRefQualifier() {
-    return findNotNullChildByClass(KlangFunctionRefQualifier.class);
+  @Nullable
+  public KlangTypeList getTypeList() {
+    return findChildByClass(KlangTypeList.class);
   }
 
   @Override
   @Nullable
-  public KlangTypeList getTypeList() {
-    return findChildByClass(KlangTypeList.class);
+  public KlangTypeSpec getTypeSpec() {
+    return findChildByClass(KlangTypeSpec.class);
   }
 
 }

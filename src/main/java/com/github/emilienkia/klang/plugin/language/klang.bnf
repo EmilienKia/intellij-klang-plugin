@@ -80,6 +80,9 @@
     implements("templateParameter")  = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
     mixin("templateParameter")       = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
 
+    implements("capture")            = "com.github.emilienkia.klang.plugin.language.psi.KlangNamedElement"
+    mixin("capture")                 = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangNamedDeclMixin"
+
     mixin("identifierExpr")      = "com.github.emilienkia.klang.plugin.language.psi.impl.KlangIdentifierExprMixin"
 
     // Phase 1 — qualifiedIdentifier carries a reference (via getReference()) when it
@@ -139,6 +142,7 @@
         KW_WHILE            = "while"
         KW_FOR              = "for"
         KW_BREAK            = "break"
+        KW_CONTINUE         = "continue"
         KW_ALIAS            = "alias"
         KW_TYPEDEF          = "typedef"
         KW_NEW              = "new"
@@ -425,7 +429,10 @@ functionDecl ::= annotationDef* (templateDeclaration | genericDeclaration)? spec
 genericDeclaration ::= 'generic' '<' templateParameterList '>'
     { name = "generic declaration" }
 
-throwsClause ::= 'throws' typeSpec (',' typeSpec)*
+// Parenthesised syntax 'throws(...)' (matching upstream klangc) is tried first;
+// bare 'throws T, ...' is retained as a fallback for tolerance / backward compatibility.
+// Repeating 'typeSpec' in both branches keeps GrammarKit's getTypeSpecList() accessor intact.
+throwsClause ::= 'throws' ('(' (typeSpec (',' typeSpec)*)? ')' | typeSpec (',' typeSpec)*)
     { name = "throws clause" }
 
 functionHead ::= IDENTIFIER
@@ -547,13 +554,14 @@ fundamentalTypeSpec ::= 'unsigned'? ('byte' | 'char' | 'short' | 'int' | 'long'
     { name = "primitive type" }
 
 // A callable type: bare prototype or addresser-qualified callable.
-// '!' and '#' addressers are forbidden on callables.
-// '&' addresser is new (reference — non-null, non-rebindable).
+// '#' addresser is forbidden on callables.
+// '&' addresser is reference (non-null, non-rebindable).
+// '!' addresser is owner (exclusive ownership of heap closure, move-only).
 callableTypeSpec ::= 'const'? callableAddresser? '(' typeList? ')' (':' typeSpec)? throwsClause?
     { name = "callable type" }
 
-callableAddresser ::= '*' | '?' | '+' | '&'
-    { name = "callable addresser (*/?/+/&)" }
+callableAddresser ::= '*' | '?' | '+' | '&' | '!'
+    { name = "callable addresser (*/?/+/&/!)" }
 
 // Unbound member fn reference: T::*(params):R  — only * ? + allowed, no &, no throwsClause
 memberFnRefType ::= ('*' | '?' | '+') '(' typeList? ')' (':' typeSpec)?
@@ -576,6 +584,7 @@ typeSuffix ::= '[' LIT_INTEGER? ']'
 statement ::= blockStatement
             | returnStatement
             | breakStatement
+            | continueStatement
             | ifElseStatement
             | whileStatement
             | foreachStatement
@@ -596,6 +605,9 @@ returnStatement ::= 'return' expression? ';'
 
 breakStatement ::= 'break' ';'
     { name = "break statement" }
+
+continueStatement ::= 'continue' ';'
+    { name = "continue statement" }
 
 ifElseStatement ::= 'if' '(' expression ')' statement ('else' statement)?
                   | 'if' '(' ifCondVarDecl ')' statement ('else' statement)?

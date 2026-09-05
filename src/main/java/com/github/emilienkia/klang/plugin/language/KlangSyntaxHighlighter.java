@@ -40,7 +40,7 @@ public class KlangSyntaxHighlighter implements SyntaxHighlighter {
     /** Modifier keywords: static const abstract final override public protected private */
     public static final TextAttributesKey KEYWORD_MODIFIER =
             createTextAttributesKey("KLANG_KEYWORD_MODIFIER", DefaultLanguageHighlighterColors.KEYWORD);
-    /** Control-flow keywords: if else while for break return throw try catch finally throws */
+    /** Control-flow keywords: if else while for break continue return throw try catch finally throws */
     public static final TextAttributesKey KEYWORD_CONTROL =
             createTextAttributesKey("KLANG_KEYWORD_CONTROL",  DefaultLanguageHighlighterColors.KEYWORD);
     /** Special / expression keywords: this new delete default operator */

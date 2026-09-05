@@ -239,5 +239,75 @@ class KlangOperatorAndDeclarationParsingTest extends KlangFixtureTestBase {
                     .as("/*! … */ is lexed as a backward block documentation comment").isTrue();
         });
     }
+
+    @Test
+    void parenthesisedThrowsClauseParses() {
+        onEdt(() -> {
+            KlangFile file = parse("""
+                    module demo;
+                    class MyError : public ::k::Throwable { }
+                    class OtherError : public ::k::Throwable { }
+                    risky() : int throws(MyError, OtherError) {
+                        return 42;
+                    }
+                    safe() : int throws() {
+                        return 0;
+                    }
+                    invoke(cb : (int):bool throws(MyError)) : bool {
+                        return cb(1);
+                    }
+                    """);
+
+            assertNoParseErrors(file);
+
+            Collection<KlangFunctionDecl> fns = PsiTreeUtil.findChildrenOfType(file, KlangFunctionDecl.class);
+            assertThat(fns).hasSize(3);
+
+            KlangFunctionDecl riskyFn = fns.stream().filter(f -> "risky".equals(f.getName())).findFirst().orElse(null);
+            assertThat(riskyFn).isNotNull();
+            assertThat(riskyFn.getThrowsClause()).isNotNull();
+            assertThat(riskyFn.getThrowsClause().getTypeSpecList()).hasSize(2);
+
+            KlangFunctionDecl safeFn = fns.stream().filter(f -> "safe".equals(f.getName())).findFirst().orElse(null);
+            assertThat(safeFn).isNotNull();
+            assertThat(safeFn.getThrowsClause()).isNotNull();
+            assertThat(safeFn.getThrowsClause().getTypeSpecList()).isEmpty();
+        });
+    }
+
+    @Test
+    void legacyUnparenthesisedThrowsClauseStillParses() {
+        onEdt(() -> {
+            KlangFile file = parse("""
+                    module demo;
+                    class MyError : public ::k::Throwable { }
+                    legacy() : int throws MyError {
+                        return 1;
+                    }
+                    """);
+
+            assertNoParseErrors(file);
+
+            KlangFunctionDecl fn = PsiTreeUtil.findChildOfType(file, KlangFunctionDecl.class);
+            assertThat(fn).isNotNull();
+            assertThat(fn.getThrowsClause()).isNotNull();
+            assertThat(fn.getThrowsClause().getTypeSpecList()).hasSize(1);
+            assertThat(fn.getThrowsClause().getTypeSpecList().get(0).getText()).isEqualTo("MyError");
+        });
+    }
+
+    @Test
+    void ownedCallableTypeParses() {
+        onEdt(() -> {
+            KlangFile file = parse("""
+                    module demo;
+                    apply(handler : !(int):int) : int {
+                        return handler(10);
+                    }
+                    """);
+
+            assertNoParseErrors(file);
+        });
+    }
 }
 

@@ -788,14 +788,24 @@ public final class KlangResolveUtil {
 
     /**
      * Resolve a member of a {@code union} value ({@code union.member}) to its
-     * {@code unionMemberDecl}. A union exposes only its declared alternatives as members — there
-     * are no inherited members or methods to search (§10 / unions). Returns {@code null} when no
-     * alternative matches {@code name}.
+     * {@code unionMemberDecl}. A union exposes its declared alternatives as members.
+     * In case of union inheritance, parent alternatives are also searched.
+     * Returns {@code null} when no alternative matches {@code name}.
      */
     public static @Nullable PsiElement resolveUnionMember(@NotNull KlangUnionDecl union,
                                                           @NotNull String name) {
         for (KlangUnionMemberDecl member : union.getUnionMemberDeclList()) {
             if (name.equals(member.getIdentifier().getText())) return member;
+        }
+        // Base union inheritance: union Derived : BaseUnion
+        KlangQualifiedIdentifier baseQid = union.getQualifiedIdentifier();
+        if (baseQid != null) {
+            for (PsiElement base : resolve(union, baseQid.getText().trim())) {
+                if (base instanceof KlangUnionDecl baseUnion) {
+                    PsiElement m = resolveUnionMember(baseUnion, name);
+                    if (m != null) return m;
+                }
+            }
         }
         return null;
     }
@@ -1196,6 +1206,19 @@ public final class KlangResolveUtil {
                     results.add(vd);
                     if (!allOverloads) return;
                 }
+                KlangAliasDecl ad = stmt.getAliasDecl();
+                if (ad != null) {
+                    KlangSoftAliasDecl sad = ad.getSoftAliasDecl();
+                    if (sad != null && name.equals(sad.getName())) {
+                        results.add(sad);
+                        if (!allOverloads) return;
+                    }
+                    KlangTypedefDecl td = ad.getTypedefDecl();
+                    if (td != null && name.equals(td.getName())) {
+                        results.add(td);
+                        if (!allOverloads) return;
+                    }
+                }
             }
         } else if (scope instanceof KlangForStatement forStmt) {
             // §3.5 — For-statement scope: init variable visible inside loop
@@ -1220,6 +1243,35 @@ public final class KlangResolveUtil {
             if (param != null && name.equals(param.getName())) {
                 results.add(param);
             }
+        } else if (scope instanceof KlangLambdaExpr lambda) {
+            // Lambda parameters
+            KlangParameterList params = lambda.getParameterList();
+            if (params != null) {
+                for (KlangParameterSpec ps : params.getParameterSpecList()) {
+                    PsiElement id = parameterNameIdentifier(ps);
+                    if (id != null && name.equals(id.getText())) {
+                        results.add(ps);
+                    }
+                }
+            }
+            // Lambda captures
+            KlangCaptureList cl = lambda.getCaptureList();
+            if (cl != null) {
+                for (KlangCapture c : cl.getCaptureList()) {
+                    PsiElement id = c.getIdentifier();
+                    if (id != null && name.equals(id.getText())) {
+                        results.add(c);
+                    }
+                }
+            }
+        } else if (scope instanceof KlangSoftAliasDecl sad) {
+            collectTemplateParams(sad.getTemplateDeclaration(), name, results);
+            collectTemplateParams(sad.getGenericDeclaration() == null
+                    ? null : sad.getGenericDeclaration().getTemplateParameterList(), name, results);
+        } else if (scope instanceof KlangTypedefDecl td) {
+            collectTemplateParams(td.getTemplateDeclaration(), name, results);
+            collectTemplateParams(td.getGenericDeclaration() == null
+                    ? null : td.getGenericDeclaration().getTemplateParameterList(), name, results);
         } else if (scope instanceof KlangFunctionDecl func) {
             // §3.3 — Function scope: parameters and named return var
             collectFunctionLocals(func, name, results);
@@ -1483,6 +1535,14 @@ public final class KlangResolveUtil {
         KlangVariableDecl var = decl.getVariableDecl();
         if (var != null && name.equals(var.getName())) { results.add(var); return; }
 
+        KlangAliasDecl aliasDecl = decl.getAliasDecl();
+        if (aliasDecl != null) {
+            KlangSoftAliasDecl sad = aliasDecl.getSoftAliasDecl();
+            if (sad != null && name.equals(sad.getName())) { results.add(sad); return; }
+            KlangTypedefDecl td = aliasDecl.getTypedefDecl();
+            if (td != null && name.equals(td.getName())) { results.add(td); return; }
+        }
+
         KlangNamespaceDecl ns = decl.getNamespaceDecl();
         if (ns != null) {
             PsiElement id = ns.getIdentifier();
@@ -1546,6 +1606,14 @@ public final class KlangResolveUtil {
         KlangVariableDecl var = decl.getVariableDecl();
         if (var != null && name.equals(var.getName())) return var;
 
+        KlangAliasDecl aliasDecl = decl.getAliasDecl();
+        if (aliasDecl != null) {
+            KlangSoftAliasDecl sad = aliasDecl.getSoftAliasDecl();
+            if (sad != null && name.equals(sad.getName())) return sad;
+            KlangTypedefDecl td = aliasDecl.getTypedefDecl();
+            if (td != null && name.equals(td.getName())) return td;
+        }
+
         KlangNamespaceDecl ns = decl.getNamespaceDecl();
         if (ns != null) {
             PsiElement id = ns.getIdentifier();
@@ -1581,6 +1649,12 @@ public final class KlangResolveUtil {
             result.addAll(enumDecl.getEnumEntryList());
         } else if (container instanceof KlangUnionDecl unionDecl) {
             result.addAll(unionDecl.getUnionMemberDeclList());
+        } else if (container instanceof KlangSoftAliasDecl sad) {
+            PsiElement target = resolveAliasTarget(sad);
+            if (target != null && target != container) result.addAll(getDirectChildren(target));
+        } else if (container instanceof KlangTypedefDecl td) {
+            PsiElement target = resolveAliasTarget(td);
+            if (target != null && target != container) result.addAll(getDirectChildren(target));
         }
         return result;
     }
@@ -1594,6 +1668,11 @@ public final class KlangResolveUtil {
         else if (decl.getVariableDecl()   != null) result.add(decl.getVariableDecl());
         else if (decl.getNamespaceDecl()  != null) result.add(decl.getNamespaceDecl());
         else if (decl.getUsingDecl()      != null) result.add(decl.getUsingDecl());
+        else if (decl.getAliasDecl()      != null) {
+            KlangAliasDecl ad = decl.getAliasDecl();
+            if (ad.getSoftAliasDecl() != null) result.add(ad.getSoftAliasDecl());
+            else if (ad.getTypedefDecl() != null) result.add(ad.getTypedefDecl());
+        }
     }
 
     // ── Predicates ────────────────────────────────────────────────────────────
@@ -1603,10 +1682,28 @@ public final class KlangResolveUtil {
      * and act as a prefix in a qualified identifier.
      */
     static boolean isContainer(@NotNull PsiElement el) {
+        if (el instanceof KlangSoftAliasDecl sad) {
+            PsiElement target = resolveAliasTarget(sad);
+            return target != null && target != el && isContainer(target);
+        }
+        if (el instanceof KlangTypedefDecl td) {
+            PsiElement target = resolveAliasTarget(td);
+            return target != null && target != el && isContainer(target);
+        }
         return el instanceof KlangNamespaceDecl
             || el instanceof KlangAggregateDecl
             || el instanceof KlangEnumDecl
             || el instanceof KlangUnionDecl;
+    }
+
+    /** Resolves the target container/type of an alias declaration. */
+    public static @Nullable PsiElement resolveAliasTarget(@NotNull PsiElement alias) {
+        KlangTypeSpec ts = null;
+        if (alias instanceof KlangSoftAliasDecl sad) ts = sad.getTypeSpec();
+        else if (alias instanceof KlangTypedefDecl td) ts = td.getTypeSpec();
+        if (ts == null || ts.getQualifiedIdentifier() == null) return null;
+        List<PsiElement> targets = resolve(alias, ts.getQualifiedIdentifier().getText().trim());
+        return targets.isEmpty() ? null : targets.get(0);
     }
 
     // ── Name extraction ───────────────────────────────────────────────────────

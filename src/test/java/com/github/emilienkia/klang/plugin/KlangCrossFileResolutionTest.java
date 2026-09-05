@@ -217,5 +217,77 @@ class KlangCrossFileResolutionTest extends KlangFixtureTestBase {
             assertThat(fileName(libk)).isEqualTo("kmath.k");
         });
     }
+
+    // ── Diagnostic — two sibling files both declaring the SAME literal module 'k' ─────
+    // (reproduces the libk 'MutableIndexedCollection' / 'UniSlot' report: two files in the
+    // same directory both writing 'module k;' at top level, referencing each other's
+    // unqualified interface/struct declarations.)
+
+    @Test
+    void siblingFilesBothDeclaringLiteralModuleKResolveUnqualifiedInterface() {
+        onEdt(() -> {
+            PsiElement target = resolveAcrossFiles("""
+                            module k;
+                            class LinkedList : public MutableIndexedColl<caret>ection {
+                            }
+                            """,
+                    "collections.k", "module k;\ninterface MutableIndexedCollection { }");
+
+            assertThat(target).as("MutableIndexedCollection declared in a sibling 'module k;' file")
+                    .isNotNull();
+            assertThat(fileName(target)).isEqualTo("collections.k");
+        });
+    }
+
+    @Test
+    void siblingFilesBothDeclaringLiteralModuleKResolveGenericBaseAndFieldType() {
+        onEdt(() -> {
+            // Closer to the real libk shape: templated interface with multiple bases (collections.k),
+            // templated class extending it and a field typed with a struct from a third sibling file
+            // (memory.k) — all three files declare the same literal 'module k;'.
+            addFile("collections.k", """
+                    module k;
+                    template<typename T>
+                    interface IndexedCollection { }
+                    template<typename T>
+                    interface MutableCollection { }
+                    template<typename T>
+                    interface Appendable { }
+                    template<typename T>
+                    interface Prependable { }
+                    template<typename T>
+                    interface MutableIndexedCollection : public IndexedCollection<T>, public MutableCollection<T>, public Appendable<T>, public Prependable<T> { }
+                    """);
+            addFile("memory.k", """
+                    module k;
+                    struct UniSlot {
+                        construct();
+                        destruct();
+                    }
+                    """);
+
+            PsiElement baseTarget = resolveAcrossFiles("""
+                            module k;
+                            template<typename T>
+                            class LinkedList : public MutableIndexedColl<caret>ection<T> {
+                            }
+                            """);
+            assertThat(baseTarget).as("MutableIndexedCollection base across files").isNotNull();
+            assertThat(fileName(baseTarget)).isEqualTo("collections.k");
+
+            fixture.configureByText("list2.k", """
+                    module k;
+                    template<typename T>
+                    class LinkedList2 {
+                        _slot : UniSl<caret>ot<T>;
+                    }
+                    """);
+            PsiReference fieldRef = fixture.getReferenceAtCaretPosition();
+            assertThat(fieldRef).isNotNull();
+            PsiElement fieldTarget = fieldRef.resolve();
+            assertThat(fieldTarget).as("UniSlot field type across files").isNotNull();
+            assertThat(fileName(fieldTarget)).isEqualTo("memory.k");
+        });
+    }
 }
 

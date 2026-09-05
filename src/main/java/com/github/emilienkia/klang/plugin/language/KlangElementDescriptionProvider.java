@@ -53,6 +53,9 @@ public class KlangElementDescriptionProvider implements ElementDescriptionProvid
         if (element instanceof KlangForeachVarDecl)           return "variable";
         if (element instanceof KlangCatchParameterDecl)       return "catch parameter";
         if (element instanceof KlangVariableDecl)             return "variable";
+        if (element instanceof KlangSoftAliasDecl)            return "alias";
+        if (element instanceof KlangTypedefDecl)              return "typedef";
+        if (element instanceof KlangCapture)                  return "capture";
         return null;
     }
 

@@ -11,14 +11,14 @@ import static com.github.emilienkia.klang.plugin.language.psi.KlangTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.github.emilienkia.klang.plugin.language.psi.*;
 
-public class KlangTypeSpecImpl extends ASTWrapperPsiElement implements KlangTypeSpec {
+public class KlangLambdaExprImpl extends ASTWrapperPsiElement implements KlangLambdaExpr {
 
-  public KlangTypeSpecImpl(@NotNull ASTNode node) {
+  public KlangLambdaExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull KlangVisitor visitor) {
-    visitor.visitTypeSpec(this);
+    visitor.visitLambdaExpr(this);
   }
 
   @Override
@@ -28,33 +28,27 @@ public class KlangTypeSpecImpl extends ASTWrapperPsiElement implements KlangType
   }
 
   @Override
-  @Nullable
-  public KlangCallableTypeSpec getCallableTypeSpec() {
-    return findChildByClass(KlangCallableTypeSpec.class);
-  }
-
-  @Override
-  @Nullable
-  public KlangFundamentalTypeSpec getFundamentalTypeSpec() {
-    return findChildByClass(KlangFundamentalTypeSpec.class);
-  }
-
-  @Override
-  @Nullable
-  public KlangMemberFnRefType getMemberFnRefType() {
-    return findChildByClass(KlangMemberFnRefType.class);
-  }
-
-  @Override
-  @Nullable
-  public KlangQualifiedIdentifier getQualifiedIdentifier() {
-    return findChildByClass(KlangQualifiedIdentifier.class);
-  }
-
-  @Override
   @NotNull
-  public List<KlangTypeSuffix> getTypeSuffixList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, KlangTypeSuffix.class);
+  public KlangBlockStatement getBlockStatement() {
+    return findNotNullChildByClass(KlangBlockStatement.class);
+  }
+
+  @Override
+  @Nullable
+  public KlangCaptureList getCaptureList() {
+    return findChildByClass(KlangCaptureList.class);
+  }
+
+  @Override
+  @Nullable
+  public KlangParameterList getParameterList() {
+    return findChildByClass(KlangParameterList.class);
+  }
+
+  @Override
+  @Nullable
+  public KlangTypeSpec getTypeSpec() {
+    return findChildByClass(KlangTypeSpec.class);
   }
 
 }

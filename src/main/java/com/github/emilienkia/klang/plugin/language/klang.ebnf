@@ -170,12 +170,12 @@ Keyword
     | 'static' | 'const'   | 'abstract'  | 'final'  | 'override'
     | 'public' | 'protected' | 'private'
     | 'this'   | 'return'
-    | 'if'     | 'else'    | 'while'     | 'for'    | 'break'
+    | 'if'     | 'else'    | 'while'     | 'for'    | 'break'   | 'continue'
     | 'new'    | 'delete'  | 'default'   | 'enum'   | 'union'
-    | 'alias'  | 'typedef'
     | 'operator'
     | 'template' | 'typename' | 'generic'
     | 'throw'  | 'try'     | 'catch'     | 'throws'  | 'finally'
+    | 'alias'  | 'typedef'
     ;
 
 (* ---------- Literals ----------------------------------------------------- *)
@@ -421,8 +421,51 @@ UsingFilter
     = 'namespace' | 'struct' | 'interface' | 'class'
     ;
 
+AliasDecl
+    = SoftAliasDecl | TypedefDecl
+    ;
+
+SoftAliasDecl
+    = { Specifier } , [ TemplateDeclaration ] , 'alias' , Identifier , ':' , TypeSpec , ';'
+    ;
+    (* Pre-existing implementation mismatch fixed: the parser already accepted a full
+       TypeSpec here; the grammar now matches. Required for 'alias F : (T):R;'.        *)
+
+TypedefDecl
+    = { Specifier } , [ TemplateDeclaration ] , 'typedef' , Identifier , ':' , TypeSpec , ';'
+    ;
+    (* A leading Specifier list carries the per-declaration visibility, exactly like any
+       other declaration: 'public alias F : (int):bool;' overrides the enclosing
+       visibility block. Visibility specifiers are rejected on a block-local alias. *)
+    (* A TemplateDeclaration introduces a parameterised alias, which renames a whole
+       family of types, e.g. 'template<typename T> alias Vec : Array<T, 16>;'.
+       A parameterised alias is never a symbol of its own: 'Vec<int>' is
+       replaced by the target type with the arguments substituted. Only type
+       parameters are allowed; a parameterised alias may not rename a function
+       or a variable. *)
+    (* Exported aliasing, as opposed to the scope-local UsingDecl: an AliasDecl
+       declared at unit, namespace or aggregate level is exported through the
+       KDI and is visible to importing modules.
+
+       'alias' is a soft alias — a pure convenience renaming of a type, a
+       function or a global/static variable.  It is fully transparent: the
+       alias name and the aliased symbol are interchangeable in both
+       directions.  Namespaces cannot be aliased this way; use
+       'using M = namespace X::Y;' instead.
+
+       'typedef' is a strong alias — it introduces a nominally distinct type
+       over an identical representation.  Conversion from the typedef to its
+       underlying type is implicit; the reverse requires an explicit cast,
+       except in a variable definition, for a compile-time constant, and
+       within an expression already involving the typedef.
+
+       Both forms are also accepted as a Statement.  In that case they are
+       implicitly private, restricted to the enclosing block, and never
+       exported. *)
+
 FriendDecl
     = 'friend' , [ FriendFilter ] , QualifiedIdentifier , [ TemplateArgList ] , ';'
+    ;
     (* The optional TemplateArgList constrains which instantiation is accepted as a friend:
        - 'friend Foo;'       : all types / all instantiations of Foo are friends.
        - 'friend Foo<T>;'    : only the instantiation of Foo matching the current T.
@@ -430,7 +473,6 @@ FriendDecl
        Same rules apply to free function friends.
        Type parameters in the TemplateArgList refer to the enclosing template's params
        and are substituted when the enclosing aggregate is instantiated. *)
-    ;
 
 FriendFilter
     = 'struct' | 'interface' | 'class'
@@ -489,14 +531,22 @@ EnumEntry
 UnionDecl
     = { AnnotationDef } , { Specifier } ,
       'union' , Identifier ,
-      [ ':' , QualifiedIdentifier ]  (* optional single parent union *)
+      [ ':' , QualifiedIdentifier ]  (* optional single parent union or polymorphic base class/interface *)
       '{' , { UnionMemberDecl } , '}'
     ;
     (* A discriminated (tagged) union.  At runtime a hidden uint32 discriminant
        tracks which alternative is active.  Member access performs a runtime
        check; assignment to a different alternative updates the discriminant.
 
-       Inheritance:
+       Inheritance & Polymorphic Unions:
+       - If the base type is a union, traditional union inheritance applies.
+       - If the base type is a class (concrete or abstract) or interface, this is a
+         polymorphic union. All alternatives must be concrete classes deriving from
+         the specified base.
+       - Polymorphic unions support the '->' operator (access members on the base)
+         and prefix '*' operator (dereference to a reference of the base type).
+       - Polymorphic union inheritance is supported: derived unions inherit the base
+         and must also have all new alternatives derive from the common base type.
        - A union may inherit from exactly one parent union.
        - All parent alternatives are accessible with their original discriminant values.
        - New alternatives are assigned discriminant values starting at
@@ -549,7 +599,7 @@ FunctionHead
     ;
 
 ThrowsClause
-    = 'throws' , TypeSpec , { ',' , TypeSpec }
+    = 'throws' , '(' , [ TypeSpec , { ',' , TypeSpec } ] , ')'
     ;
 
 DestructorHead
@@ -559,7 +609,7 @@ DestructorHead
 OperatorFunctionHead
     = 'operator' , OperatorSymbol
     | 'operator' , '[' , ']'                                     (* subscript operator *)
-    | 'operator' , '(' , ')' , '('                               (* call operator — see disambiguation note *)
+    | 'operator' , '(' , ')' , '('                               (* call operator — NEW; see disambiguation note *)
     ;
     (* Disambiguation between call operator and cast/conversion operator:
        'operator' '(' ')' followed by '(' → call operator (OperatorFunctionHead)
@@ -617,7 +667,11 @@ StaticDep
 
 FunctionBody
     = BlockStatement
-    | '->' , ( 'default' | 'delete' ) , ';'                     (* aliasing; '-> default' only for constructors and assignment operators *)
+    | '->' , ( 'default' | 'delete' ) , ';'                     (* aliasing; '-> default' only for constructors and
+                                                                    assignment operators; '-> delete' also allowed
+                                                                    (delete-only) on a non-static member function
+                                                                    literally named 'main' — see main.md, "Application
+                                                                    entry-point chain" *)
     | '->' , QualifiedIdentifier ,
              [ '(' , [ TypeSpecList ] , ')' ] , ';'              (* redirect *)
     | ';'                                                        (* abstract / bodyless *)
@@ -650,27 +704,6 @@ VariableDecl
     = { Specifier } , Identifier , ':' , TypeSpec , [ Initialiser ] , ';'
     ;
 
-AliasDecl
-    = SoftAliasDecl | TypedefDecl
-    ;
-
-SoftAliasDecl
-    = { Specifier } , [ TemplateDeclaration ] , 'alias' , Identifier , ':' , TypeSpec , ';'
-    ;
-    (* 'alias' is a soft alias — a pure convenience renaming of a type, a
-       callable or a value.  The alias name and the aliased symbol are
-       interchangeable in both directions.  Namespaces cannot be aliased this
-       way; use UsingDecl.  Both forms are also accepted as a Statement; in
-       that case visibility specifiers are rejected.                         *)
-
-TypedefDecl
-    = { Specifier } , [ TemplateDeclaration ] , 'typedef' , Identifier , ':' , TypeSpec , ';'
-    ;
-    (* 'typedef' is a strong alias — it introduces a nominally distinct type
-       over an identical representation.  Conversion from the typedef to its
-       underlying type requires an explicit cast, except within an expression
-       already involving the typedef.                                        *)
-
 Initialiser
     = '=' , ConditionalExpr
     | '(' , [ ExpressionList ] , ')' , [ '[' , ConditionalExpr , ']' ]
@@ -683,6 +716,10 @@ Specifier
     = 'public' | 'protected' | 'private'
     | 'static' | 'const' | 'abstract' | 'final' | 'override' | 'default'
     ;
+    (* 'default' as a prefix specifier marks an interface member function as a   *)
+    (* default method: a concrete, virtual method with a body that derived        *)
+    (* classes inherit unless they override it. It is only valid on interface     *)
+    (* member functions and requires a body.                                      *)
 
 (* ---------- Type Specifiers ---------------------------------------------- *)
 
@@ -690,6 +727,45 @@ TypeSpec
     = CallableTypeSpec                                            (* callable — addressed or prototype *)
     | QualifiedIdentifier , '::' , MemberFnRefType               (* unbound member fn ref *)
     | [ 'const' ] , ( FundamentalTypeSpec | QualifiedIdentifier ) , { TypeSuffix }
+    ;
+
+(* A callable type: either a bare prototype (no addresser, only valid as alias/template
+   target) or a prototype qualified by an addresser (* ? + & !).
+   Examples:
+     (int,double):long              -- prototype, no addresser
+     *(int):int                     -- pointer (nullable, rebindable)
+     ?(int)                         -- view (nullable, non-rebindable), void return
+     +(int,int):bool                -- link (non-null, rebindable)
+     &():int                        -- reference (non-null, non-rebindable)
+     !(int):int                     -- owner (exclusive ownership of heap closure, move-only)
+     const *(int):int               -- const callable pointer (non-rebindable)
+     (int):int throws(IOException)  -- callable with checked-exception contract
+   K has no 'void' keyword: void return = omitted return type.
+   '#' addresser is FORBIDDEN on callables (ERR_CALLABLE_BAD_ADDRESSER).             *)
+CallableTypeSpec
+    = [ 'const' ] , [ CallableAddresser ] ,
+      '(' , [ TypeList ] , ')' ,
+      [ ':' , TypeSpec ] ,
+      [ ThrowsClause ]
+    ;
+    (* The ': TypeSpec' return type is parsed greedily: the ':' immediately after ')'
+       always opens the return type. Nested callable types as parameters terminate on
+       the enclosing ',' or ')'. Example: (int, (int):int):bool has parameter type
+       (int):int and return type bool.                                               *)
+
+CallableAddresser
+    = '*'   (* pointer — nullable, rebindable *)
+    | '?'   (* view    — nullable, non-rebindable *)
+    | '+'   (* link    — non-null,  rebindable *)
+    | '&'   (* reference — non-null, non-rebindable; must be explicitly initialised *)
+    | '!'   (* owner   — exclusive ownership of closure environment, move-only *)
+    ;
+
+(* Unbound member function reference: T::*(params):R, T::?(params), T::+(params).
+   The return type suffix is optional but strongly recommended to avoid ambiguity.
+   Retained for backward compatibility; see doc/spec/language/functions/callables.md. *)
+MemberFnRefType
+    = ( '*' | '?' | '+' ) , '(' , [ TypeList ] , ')' , [ ':' , TypeSpec ]
     ;
 
 FundamentalTypeSpec
@@ -701,29 +777,6 @@ FundamentalTypeSpec
     (* 'char' has no signed/unsigned variant. The 1-byte integer types are      *)
     (* 'byte' (signed) and 'unsigned byte'. 'unsigned char' is not a valid type.*)
 
-(* A callable type: either a bare prototype (no addresser, only valid as alias/template
-   target) or a prototype qualified by an addresser (* ? + &).
-   K has no 'void' keyword: void return = omitted return type.
-   '!' and '#' addressers are FORBIDDEN on callables.
-   The '&' addresser is NEW compared to the old function-reference types.            *)
-CallableTypeSpec
-    = [ 'const' ] , [ CallableAddresser ] ,
-      '(' , [ TypeList ] , ')' ,
-      [ ':' , TypeSpec ] ,
-      [ ThrowsClause ]
-    ;
-
-CallableAddresser
-    = '*'   (* pointer — nullable, rebindable *)
-    | '?'   (* view    — nullable, non-rebindable *)
-    | '+'   (* link    — non-null,  rebindable *)
-    | '&'   (* reference — non-null, non-rebindable *)
-    ;
-
-(* Unbound member function reference: T::*(params):R, T::?(params), T::+(params). *)
-MemberFnRefType
-    = ( '*' | '?' | '+' ) , '(' , [ TypeList ] , ')' , [ ':' , TypeSpec ]
-    ;
 
 TypeList
     = TypeSpec , { ',' , TypeSpec }
@@ -745,6 +798,7 @@ Statement
     = BlockStatement
     | ReturnStatement
     | BreakStatement
+    | ContinueStatement
     | IfElseStatement
     | WhileStatement
     | ForStatement
@@ -766,6 +820,10 @@ ReturnStatement
 
 BreakStatement
     = 'break' , ';'
+    ;
+
+ContinueStatement
+    = 'continue' , ';'
     ;
 
 IfElseStatement
@@ -834,11 +892,12 @@ ThrowStatement
     | 'throw' , ';'
     ;
     (* The first form throws a new exception. The expression must evaluate to a
-       class type that derives from ::k::Throwable or is ::k::Throwable itself.
-       Throwing a non-Throwable type is a compile-time error (0x01C0).
+       value of a type that derives from ::k::Throwable or is ::k::Throwable itself.
+       Exceptions are strictly thrown by value; throwing pointers, owners ('throw new ...'),
+       or non-Throwable types is a compile-time error (0x1201).
        The second form (bare 'throw;') is a rethrow — it re-throws the exception
        currently being handled. It is only valid inside a catch block; using it
-       elsewhere is a compile-time error (0x01C9). *)
+       elsewhere is a compile-time error (0x120A). *)
 
 TryCatchStatement
     = 'try' , BlockStatement , { CatchClause } , [ FinallyClause ]
@@ -978,11 +1037,11 @@ PostfixOp
 PrimaryExpr
     = Literal
     | 'this'
-    | LambdaExpr
     | '(' , Expression , ')'
     | AnnotationInitExpr
     | BraceInitList
     | IdentifierExpr
+    | LambdaExpr                                                  (* NEW *)
     ;
 
 (* A lambda expression yields a '&(params):ret' callable.
@@ -995,7 +1054,7 @@ LambdaExpr
     (* 'const' prefix: forces the generated operator() to be const.
        No CaptureList: implicit capture-all-by-reference.
        '[]': empty capture list — any reference to an enclosing local is an error.
-       Return type may be omitted and will be deduced.                               *)
+       Return type may be omitted and will be deduced (see lambdas.md §6).           *)
 
 CaptureList
     = '[' , ']'
@@ -1007,6 +1066,15 @@ Capture
     | [ 'const' ] , [ '&' ] , Identifier
     | [ 'const' ] , [ '&' ] , Identifier , '=' , ConditionalExpr   (* init capture *)
     ;
+    (* Legal spellings only (anything else → ERR_LAMBDA_BAD_CAPTURE_SYNTAX):
+       x            — capture x by value
+       &x           — capture x by reference (link T+)
+       const &x     — capture x by const reference (const T&)
+       x = expr     — init capture by value (expr evaluated at lambda site)
+       &x = expr    — init capture by reference to lvalue expr
+       this / &this — capture enclosing object by reference (Outer+)
+       const this / const &this — capture enclosing object by const reference
+       [&], [=], [auto …] — REJECTED (ERR_LAMBDA_BAD_CAPTURE_SYNTAX)               *)
 
 AnnotationInitExpr
     = AnnotationDef

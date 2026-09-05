@@ -5,6 +5,12 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface KlangFunctionRefQualifier extends PsiElement {
+public interface KlangCapture extends KlangNamedElement {
+
+  @Nullable
+  KlangConditionalExpr getConditionalExpr();
+
+  @Nullable
+  PsiElement getIdentifier();
 
 }

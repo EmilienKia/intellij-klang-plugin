@@ -42,8 +42,12 @@ See the design report in [`docs/klang/navigation-plan.md`](docs/klang/navigation
 
 - [~] **Name resolution** covers all contexts: identifiers, types, member access, templates, exceptions, multi-file/cross-module. Remaining: project-wide inheritance markers (M4, done) and stubs (M5). See `docs/klang/multifile-indexing-plan.md`.
 - [x] **Exception types** validated via `KlangExceptionTypeInspection` (throw/catch/throws operands must derive from `::k::Throwable`). Tests: `KlangExceptionTypeInspectionTest`.
+- [x] **Parenthesised `throws(...)`** — contract checking, empty `throws()` verification, and callable signature exception checking.
 - [x] **Templates / generics** — parameters, arguments, and template-qualified scope expressions resolve. Monomorphisation/type-checking out of scope.
 - [x] **Member access resolution** — `a.b`, `a->b`, fields/methods/inherited, unified call, constructor & designated initializers, `Type::member`, enum/union entries.
+- [x] **Polymorphic unions** — resolve `->` and `.` base members and prefix `*` dereference to base type on polymorphic unions inheriting from class/interface.
+- [x] **Lambda closures & captures** — capture variables (`[x]`, `[&x]`, `[x = expr]`) promoted to navigation targets, resolving within lambda expressions.
+- [x] **Soft / Typedef aliases (`alias`, `typedef`)** — symbol aliasing resolution, type substitution for template aliases (`template<typename T> alias Vec : Array<T, 16>;`), and navigation targets.
 - [ ] **Type inference / checking** — none. No diagnostics beyond parser errors.
 - [~] **Completion** — reachable named declarations only; context/member/keyword completion TODO.
 - [ ] **`using` aliases** — ensure alias declarations participate fully in resolution and rename.

@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface KlangStatement extends PsiElement {
 
   @Nullable
+  KlangAliasDecl getAliasDecl();
+
+  @Nullable
   KlangBlockStatement getBlockStatement();
 
   @Nullable

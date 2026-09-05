@@ -191,6 +191,90 @@ class KlangMemberAccessResolutionTest extends KlangFixtureTestBase {
             assertThat(((KlangNamedElement) target).getName()).isEqualTo("coord");
         });
     }
+
+    @Test
+    void memberAccessThroughAliasResolves() {
+        onEdt(() -> {
+            PsiElement target = resolveAtCaret("""
+                    module demo;
+                    struct Point { coord: float; other: float; }
+                    alias MyPoint : Point;
+                    main() : int {
+                        p: MyPoint;
+                        f: float = p.co<caret>ord;
+                        return 0;
+                    }
+                    """);
+            assertThat(target).isInstanceOf(KlangVariableDecl.class);
+            assertThat(((KlangNamedElement) target).getName()).isEqualTo("coord");
+        });
+    }
+
+    @Test
+    void polymorphicUnionMemberAccessResolvesToBaseMethod() {
+        onEdt(() -> {
+            PsiElement target = resolveAtCaret("""
+                    module demo;
+                    interface Shape {
+                        draw() : void;
+                    }
+                    struct Circle : public Shape {
+                        draw() : void { }
+                    }
+                    union AnyShape : Shape {
+                        circle: Circle;
+                    }
+                    render(s : AnyShape) {
+                        s.dr<caret>aw();
+                    }
+                    """);
+            assertThat(target).isInstanceOf(KlangFunctionDecl.class);
+            assertThat(((KlangNamedElement) target).getName()).isEqualTo("draw");
+        });
+    }
+
+    @Test
+    void polymorphicUnionArrowAccessResolvesToBaseMethod() {
+        onEdt(() -> {
+            PsiElement target = resolveAtCaret("""
+                    module demo;
+                    interface Shape {
+                        draw() : void;
+                    }
+                    struct Circle : public Shape {
+                        draw() : void { }
+                    }
+                    union AnyShape : Shape {
+                        circle: Circle;
+                    }
+                    render(s : AnyShape) {
+                        s->dr<caret>aw();
+                    }
+                    """);
+            assertThat(target).isInstanceOf(KlangFunctionDecl.class);
+            assertThat(((KlangNamedElement) target).getName()).isEqualTo("draw");
+        });
+    }
+
+    @Test
+    void inheritedUnionMemberAccessResolves() {
+        onEdt(() -> {
+            PsiElement target = resolveAtCaret("""
+                    module demo;
+                    union BaseStorage {
+                        baseVal: int;
+                    }
+                    union DerivedStorage : BaseStorage {
+                        derivedVal: int;
+                    }
+                    test(d : DerivedStorage) {
+                        d.base<caret>Val = 10;
+                    }
+                    """);
+            assertThat(target).isInstanceOf(KlangUnionMemberDecl.class);
+            assertThat(((KlangUnionMemberDecl) target).getIdentifier().getText()).isEqualTo("baseVal");
+        });
+    }
 }
 
 

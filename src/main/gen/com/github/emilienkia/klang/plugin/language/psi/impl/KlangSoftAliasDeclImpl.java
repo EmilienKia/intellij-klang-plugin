@@ -8,17 +8,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.github.emilienkia.klang.plugin.language.psi.KlangTypes.*;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.github.emilienkia.klang.plugin.language.psi.*;
 
-public class KlangTypeSpecImpl extends ASTWrapperPsiElement implements KlangTypeSpec {
+public class KlangSoftAliasDeclImpl extends KlangNamedDeclMixin implements KlangSoftAliasDecl {
 
-  public KlangTypeSpecImpl(@NotNull ASTNode node) {
+  public KlangSoftAliasDeclImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull KlangVisitor visitor) {
-    visitor.visitTypeSpec(this);
+    visitor.visitSoftAliasDecl(this);
   }
 
   @Override
@@ -29,32 +28,32 @@ public class KlangTypeSpecImpl extends ASTWrapperPsiElement implements KlangType
 
   @Override
   @Nullable
-  public KlangCallableTypeSpec getCallableTypeSpec() {
-    return findChildByClass(KlangCallableTypeSpec.class);
-  }
-
-  @Override
-  @Nullable
-  public KlangFundamentalTypeSpec getFundamentalTypeSpec() {
-    return findChildByClass(KlangFundamentalTypeSpec.class);
-  }
-
-  @Override
-  @Nullable
-  public KlangMemberFnRefType getMemberFnRefType() {
-    return findChildByClass(KlangMemberFnRefType.class);
-  }
-
-  @Override
-  @Nullable
-  public KlangQualifiedIdentifier getQualifiedIdentifier() {
-    return findChildByClass(KlangQualifiedIdentifier.class);
+  public KlangGenericDeclaration getGenericDeclaration() {
+    return findChildByClass(KlangGenericDeclaration.class);
   }
 
   @Override
   @NotNull
-  public List<KlangTypeSuffix> getTypeSuffixList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, KlangTypeSuffix.class);
+  public List<KlangSpecifier> getSpecifierList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, KlangSpecifier.class);
+  }
+
+  @Override
+  @Nullable
+  public KlangTemplateDeclaration getTemplateDeclaration() {
+    return findChildByClass(KlangTemplateDeclaration.class);
+  }
+
+  @Override
+  @Nullable
+  public KlangTypeSpec getTypeSpec() {
+    return findChildByClass(KlangTypeSpec.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getIdentifier() {
+    return findChildByType(IDENTIFIER);
   }
 
 }

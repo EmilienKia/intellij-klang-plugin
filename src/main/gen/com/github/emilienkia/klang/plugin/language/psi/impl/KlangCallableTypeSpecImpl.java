@@ -11,14 +11,14 @@ import static com.github.emilienkia.klang.plugin.language.psi.KlangTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.github.emilienkia.klang.plugin.language.psi.*;
 
-public class KlangTypeSpecImpl extends ASTWrapperPsiElement implements KlangTypeSpec {
+public class KlangCallableTypeSpecImpl extends ASTWrapperPsiElement implements KlangCallableTypeSpec {
 
-  public KlangTypeSpecImpl(@NotNull ASTNode node) {
+  public KlangCallableTypeSpecImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull KlangVisitor visitor) {
-    visitor.visitTypeSpec(this);
+    visitor.visitCallableTypeSpec(this);
   }
 
   @Override
@@ -29,32 +29,26 @@ public class KlangTypeSpecImpl extends ASTWrapperPsiElement implements KlangType
 
   @Override
   @Nullable
-  public KlangCallableTypeSpec getCallableTypeSpec() {
-    return findChildByClass(KlangCallableTypeSpec.class);
+  public KlangCallableAddresser getCallableAddresser() {
+    return findChildByClass(KlangCallableAddresser.class);
   }
 
   @Override
   @Nullable
-  public KlangFundamentalTypeSpec getFundamentalTypeSpec() {
-    return findChildByClass(KlangFundamentalTypeSpec.class);
+  public KlangThrowsClause getThrowsClause() {
+    return findChildByClass(KlangThrowsClause.class);
   }
 
   @Override
   @Nullable
-  public KlangMemberFnRefType getMemberFnRefType() {
-    return findChildByClass(KlangMemberFnRefType.class);
+  public KlangTypeList getTypeList() {
+    return findChildByClass(KlangTypeList.class);
   }
 
   @Override
   @Nullable
-  public KlangQualifiedIdentifier getQualifiedIdentifier() {
-    return findChildByClass(KlangQualifiedIdentifier.class);
-  }
-
-  @Override
-  @NotNull
-  public List<KlangTypeSuffix> getTypeSuffixList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, KlangTypeSuffix.class);
+  public KlangTypeSpec getTypeSpec() {
+    return findChildByClass(KlangTypeSpec.class);
   }
 
 }

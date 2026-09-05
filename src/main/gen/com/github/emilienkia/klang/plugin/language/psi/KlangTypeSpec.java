@@ -8,10 +8,13 @@ import com.intellij.psi.PsiElement;
 public interface KlangTypeSpec extends PsiElement {
 
   @Nullable
-  KlangFunctionRefType getFunctionRefType();
+  KlangCallableTypeSpec getCallableTypeSpec();
 
   @Nullable
   KlangFundamentalTypeSpec getFundamentalTypeSpec();
+
+  @Nullable
+  KlangMemberFnRefType getMemberFnRefType();
 
   @Nullable
   KlangQualifiedIdentifier getQualifiedIdentifier();
